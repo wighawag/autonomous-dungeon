@@ -18,7 +18,7 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 		const findIndex = state.greetings.findIndex((v) => v.account === event.args.user);
 
 		// the message is one of the args of the event object (automatically populated and typed! from the abi)
-		const message = event.args.message;
+		const message = event.args.message + ' ---';
 
 		if (findIndex === -1) {
 			// if none message exists from that user we push a new entry
