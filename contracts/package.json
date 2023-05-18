@@ -1,0 +1,38 @@
+{
+  "name": "template-foundry",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "deployments",
+    "src"
+  ],
+  "devDependencies": {
+    "as-soon": "^0.0.4",
+    "forge-deploy": "0.1.1",
+    "forge-deploy-proxy": "^0.1.0",
+    "ldenv": "^0.3.5"
+  },
+  "scripts": {
+    "prepare": "forge install --no-git foundry-rs/forge-std@v1.5.3 || echo ''",
+    "start": "zellij --layout zellij.kdl a template-foundry || zellij --layout zellij.kdl -s template-foundry",
+    "stop": "zellij kill-session template-foundry",
+    "start:wezterm": "wezterm --config-file wezterm.lua",
+    "gen-deployer": "forge-deploy gen-deployer --templates node_modules/forge-deploy-proxy/templates",
+    "compile": "pnpm gen-deployer && forge build",
+    "forge-deploy": "forge-deploy",
+    "export": "forge-deploy export",
+    "deployments:sync": "forge-deploy sync",
+    "test": "pnpm gen-deployer && forge test",
+    "format:check": "forge fmt --check",
+    "format": "forge fmt",
+    "watch_compile": "as-soon -w script -w src -w test pnpm compile",
+    "watch_deploy": "pnpm compile && as-soon -w script -w src -w test pnpm run deploy",
+    "watch_test": "as-soon -w script -w src -w test pnpm test",
+    "watch_out_deploy": "pnpm compile; as-soon -w out pnpm run deploy",
+    "watch_out_test": "pnpm compile; as-soon -w out pnpm run deploy",
+    "deploy": "ldenv -m localhost forge script script/Deploy.s.sol --private-key @@DEPLOYER_PRIVATE_KEY --rpc-url @@RPC_URL_:DEPLOYMENT_CONTEXT,RPC_URL --broadcast ~~ forge-deploy sync ~~ @@",
+    "script": "ldenv forge script --private-key @@DEPLOYER_PRIVATE_KEY --rpc-url @@RPC_URL_:DEPLOYMENT_CONTEXT,RPC_URL --broadcast @@",
+    "local_node": "rm -Rf deployments/localhost && anvil --host 0.0.0.0"
+  }
+}
