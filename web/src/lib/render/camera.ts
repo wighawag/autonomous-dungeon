@@ -62,7 +62,7 @@ export class Camera extends BasicObjectStore<CameraState> {
 				renderScale: 0,
 				devicePixelRatio: 1,
 			});
-			this._setXYZoom(0, 0, 32);
+			this._setXYZoom(0, 0, 1);
 			// this._setXYZoom(0, 0, Camera.zoomLevels[this.zoomIndex]);
 		}
 
@@ -355,8 +355,8 @@ export class Camera extends BasicObjectStore<CameraState> {
 	updateZoom(offsetX: number, offsetY: number, dir: 1 | -1 | 0): void {
 		const {x, y} = this.screenToWorld(offsetX, offsetY);
 
-		const maxSize = 500 * 500; //700 * 700; was too big
-		const minSize = 16 * 16;
+		const maxSize = 500 * 500 * 50; //700 * 700; was too big
+		const minSize = 16 * 16 * 50;
 
 		const size = this.$store.width * this.$store.height;
 		const renderSize = this.$store.renderWidth * this.$store.renderHeight;

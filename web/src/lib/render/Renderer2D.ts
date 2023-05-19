@@ -62,13 +62,40 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
 		ctx.fillStyle = 'black';
-		ctx.font = '50px serif';
-		ctx.fillText('W', 0, 0);
-		for (let y = 0; y < height; y += 50) {
-			for (let x = 0; x < width; x += 50) {
-				ctx.fillText('A', x, y);
+
+		const CELL_SIZE = 50;
+		const ROOM_CELL_SIZE = 3;
+		const ROOM_SIZE = CELL_SIZE * ROOM_CELL_SIZE;
+		ctx.font = `${CELL_SIZE}px serif`;
+
+		const visualWidth = Math.ceil(this.cameraState.width / ROOM_SIZE);
+		const visualHeight = Math.ceil(this.cameraState.height / ROOM_SIZE);
+		const left = Math.floor(this.cameraState.x / ROOM_SIZE - visualWidth / 2);
+		const top = Math.floor(this.cameraState.y / ROOM_SIZE - visualHeight / 2);
+		const right = left + visualWidth;
+		const bottom = top + visualHeight;
+
+		for (let y = top; y <= bottom; y++) {
+			for (let x = left; x <= right; x++) {
+				const cx = x * ROOM_SIZE;
+				const cy = y * ROOM_SIZE;
+				ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, ROOM_SIZE, 1);
+				ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, 1, ROOM_SIZE);
+				ctx.fillRect(cx - ROOM_SIZE / 2, cy + ROOM_SIZE / 2, ROOM_SIZE, 1);
+				ctx.fillRect(cx + ROOM_SIZE / 2, cy - ROOM_SIZE / 2, 1, ROOM_SIZE);
+				for (let suby = -1; suby <= 1; suby++) {
+					for (let subx = -1; subx <= 1; subx++) {
+						ctx.fillText('.', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
+					}
+				}
 			}
 		}
+		// ctx.fillText('W', 0, 0);
+		// for (let y = 0; y < height; y += 50) {
+		// 	for (let x = 0; x < width; x += 50) {
+		// 		ctx.fillText('A', x, y);
+		// 	}
+		// }
 
 		// ctx.fillText('W', 40, 5);
 		ctx.resetTransform();
