@@ -3,7 +3,12 @@ export type Position = {
 	y: bigint;
 };
 
+export type Action = {
+	type: 'move';
+	to: Position;
+};
+
 export type OffchainState = {
 	position: Position;
-	path: Position[];
+	actions: Action[];
 };
