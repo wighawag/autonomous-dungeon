@@ -9,6 +9,7 @@ export type Position = {
 
 export type Action = {
 	type: 'move';
+	from: Position; // not really needed, // TODO remove
 	to: Position;
 };
 
@@ -67,8 +68,8 @@ export function initCharacter() {
 	const store = writable($state);
 
 	function move(to: Position) {
-		$state.actions.push({type: 'move', to});
 		if (isValidMove($state.position, to)) {
+			$state.actions.push({type: 'move', to, from: {...$state.position}});
 			$state.position.cx = to.cx;
 			$state.position.cy = to.cy;
 			store.set($state);

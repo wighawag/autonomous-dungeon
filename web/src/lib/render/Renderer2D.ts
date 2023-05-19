@@ -167,6 +167,25 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 			x: offchainState.$state.position.cx - characterRoom.x * 3,
 			y: offchainState.$state.position.cy - characterRoom.y * 3,
 		};
+
+		for (const action of offchainState.$state.actions) {
+			const actionRoom = {
+				x: Math.floor((action.from.cx + 1) / 3),
+				y: Math.floor((action.from.cy + 1) / 3),
+			};
+			const positionInRoom = {
+				x: action.from.cx - actionRoom.x * 3,
+				y: action.from.cy - actionRoom.y * 3,
+			};
+			ctx.globalAlpha = 0.3;
+			ctx.fillText(
+				'👣',
+				actionRoom.x * ROOM_SIZE + positionInRoom.x * CELL_SIZE,
+				actionRoom.y * ROOM_SIZE + positionInRoom.y * CELL_SIZE
+			);
+			ctx.globalAlpha = 1;
+		}
+
 		ctx.fillText(
 			'🧙‍♂️',
 			characterRoom.x * ROOM_SIZE + characterRoomPosition.x * CELL_SIZE,
