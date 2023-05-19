@@ -48,22 +48,31 @@ export class Camera extends BasicObjectStore<CameraState> {
 		this.renderView = renderView;
 
 		if (!this.$store) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			this._set({
-				x: 0,
-				y: 0,
-				width: 0,
-				height: 0,
-				zoom: 0,
-				renderX: 0,
-				renderY: 0,
-				renderWidth: 0,
-				renderHeight: 0,
-				renderScale: 0,
-				devicePixelRatio: 1,
-			});
-			this._setXYZoom(0, 0, 1);
-			// this._setXYZoom(0, 0, Camera.zoomLevels[this.zoomIndex]);
+			try {
+				const data = localStorage.getItem('_camera');
+				if (data) {
+					const v = JSON.parse(data);
+					this._set(v);
+				}
+			} catch {}
+			if (!this.$store) {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				this._set({
+					x: 0,
+					y: 0,
+					width: 0,
+					height: 0,
+					zoom: 0,
+					renderX: 0,
+					renderY: 0,
+					renderWidth: 0,
+					renderHeight: 0,
+					renderScale: 0,
+					devicePixelRatio: 1,
+				});
+				this._setXYZoom(0, 0, 1);
+				// this._setXYZoom(0, 0, Camera.zoomLevels[this.zoomIndex]);
+			}
 		}
 
 		this.unsubscribeFromRenderView = this.renderView.subscribe(this.onRenderViewUpdates.bind(this));
@@ -133,6 +142,9 @@ export class Camera extends BasicObjectStore<CameraState> {
 		super._set(this.$store);
 
 		(window as any).cameraState = this.$store;
+		try {
+			localStorage.setItem('_camera', JSON.stringify(this.$store));
+		} catch {}
 	}
 
 	screenToWorld(x: number, y: number): {x: number; y: number} {

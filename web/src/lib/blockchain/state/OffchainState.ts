@@ -1,6 +1,5 @@
 import {writable} from 'svelte/store';
 import {logs} from 'named-logs';
-import {slice} from 'viem';
 const logger = logs('offchain-state');
 
 export type Position = {
@@ -56,7 +55,7 @@ export function isValidMove(from: Position, to: Position) {
 	if (from_room === to_room) {
 		return true;
 	} else {
-		return from_room.exits[dir] && (from.cx % 3 === 0 || from.cy % 3 === 0);
+		return from_room.exits[dir]; //  && (from.cx % 3 === 0 || from.cy % 3 === 0);
 	}
 }
 
