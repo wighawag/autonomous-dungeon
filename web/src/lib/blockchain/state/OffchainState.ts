@@ -1,5 +1,6 @@
 import {writable} from 'svelte/store';
 import {logs} from 'named-logs';
+import {encodePacked, keccak256} from 'viem';
 const logger = logs('offchain-state');
 
 export type Position = {
@@ -100,6 +101,30 @@ export function initCharacter() {
 		store.set($state);
 	}
 
+	const TOTAL = 24 * 3600;
+	const ACTION_PERIOD = 23 * 3600;
+	const START_TIMESTAMP = 0;
+
+	function timestamp() {
+		return Math.floor(Date.now() / 1000);
+	}
+
+	function epoch() {
+		return Math.floor((timestamp() - START_TIMESTAMP) / TOTAL);
+	}
+
+	function isActionPeriod() {
+		return timestamp() - epoch() * TOTAL < ACTION_PERIOD;
+	}
+
+	function epochHash(epochToGenerate?: number) {
+		if (!epochToGenerate) {
+			epochToGenerate = epoch();
+		}
+		// TODO fetch from contract
+		return keccak256(encodePacked(['uint256'], [BigInt(epochToGenerate)]));
+	}
+
 	return {
 		$state,
 		subscribe: store.subscribe,
@@ -107,6 +132,7 @@ export function initCharacter() {
 		reset,
 		back,
 		max,
+		epochHash,
 	};
 }
 
@@ -148,20 +174,59 @@ export type Room = RawRoom & {
 	y: number;
 };
 
+// using 64 bits room id
+const leftMostBit = BigInt('0x8000000000000000');
+const bn32 = BigInt('0x10000000000000000');
+export function bigIntIDToXYID(position: string) {
+	const bn = BigInt(position);
+	const x = BigInt.asUintN(32, bn) - 2n ** 31n;
+	const y = (bn >> 32n) - 2n ** 31n;
+	const rx = x >= leftMostBit ? -(bn32 - x) : x;
+	const ry = y >= leftMostBit ? -(bn32 - y) : y;
+	return '' + rx + ',' + ry;
+}
+
+export function xyToXYID(x: number, y: number) {
+	return '' + x + ',' + y;
+}
+
+export function xyToBigIntID(x: number, y: number): bigint {
+	// we add half the range to avoid dealing with negative
+	// TODO improve thta handling
+	const bn = BigInt(x) + 2n ** 31n + ((BigInt(y) + 2n ** 31n) << 32n);
+	return bn;
+}
+
+export function value(data: string, leastSignificantBit: number, size: number): number {
+	return parseInt(((BigInt(data) >> BigInt(leastSignificantBit)) % 2n ** BigInt(size)).toString());
+}
+
+export function value8Mod(data: string, leastSignificantBit: number, mod: number): number {
+	return parseInt(((BigInt(data) >> BigInt(leastSignificantBit)) % BigInt(mod)).toString());
+}
+
 const raw_room_cache: {[coords: string]: RawRoom} = {};
 export function getRawRoom(x: number, y: number): RawRoom {
 	const key = `${x},${y}`;
 
 	let room = raw_room_cache[key];
 	if (!room) {
-		const firstExit = Math.floor(Math.random() * 4);
-		const hasSecondExit = Math.random() < 0.1;
-		const secondExit = hasSecondExit ? (firstExit + (Math.floor(Math.random() * 3) + 1)) % 4 : 4;
+		const epochHash = offchainState.epochHash();
+		const roomID = xyToBigIntID(x, y);
+		const roomHashData = keccak256(encodePacked(['bytes32', 'uint64'], [epochHash, roomID]));
+
+		// take from the first 0 (right side) and take 2 bits to give you a number between [0,2**2[
+		const firstExit = value(roomHashData, 0, 2);
+
+		const hasSecondExit = value(roomHashData, 2, 5) < 3; // take 32 values [0,2**5[
+		const secondExitRaw = value(roomHashData, 7, 2); // this has one value too much. if
+		const secondExit = hasSecondExit && secondExitRaw < 3 ? secondExitRaw : 4;
 		// const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 		// const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 
-		const chest = Math.random() < 0.007;
-		const monster = chest ? Math.random() < 0.3 : Math.random() < 0.01;
+		const chest = value(roomHashData, 9, 10) < 7; // take 1024 values [0,2**10[
+		const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
+		const monster = chest ? monsterRaw < 30 : monsterRaw < 1;
 
 		room = {
 			exits: [
