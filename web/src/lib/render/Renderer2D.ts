@@ -1,6 +1,7 @@
 import {writable, type Readable, type Subscriber, type Unsubscriber, type Writable} from 'svelte/store';
 import type {CameraState} from './camera';
 import type {RenderViewState} from './renderview';
+import {offchainState} from '$lib/blockchain/state/OffchainState';
 
 export class WebGLRenderer implements Readable<RenderViewState> {
 	// private state: Data;
@@ -90,6 +91,10 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 				}
 			}
 		}
+
+		const character = offchainState.$state.position;
+		ctx.fillText('😀', character.x * CELL_SIZE, character.y * CELL_SIZE);
+
 		// ctx.fillText('W', 0, 0);
 		// for (let y = 0; y < height; y += 50) {
 		// 	for (let x = 0; x < width; x += 50) {
