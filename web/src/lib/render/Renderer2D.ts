@@ -2,6 +2,8 @@ import {writable, type Readable, type Subscriber, type Unsubscriber, type Writab
 import type {CameraState} from './camera';
 import type {RenderViewState} from './renderview';
 import {getRoom, getRoomFromCell, offchainState, type Room} from '$lib/blockchain/state/OffchainState';
+import {account} from '$lib/web3';
+import {Blockie} from '$lib/utils/eth/blockie';
 
 const CELL_SIZE = 50;
 const ROOM_CELL_SIZE = 3;
@@ -186,11 +188,20 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 			ctx.globalAlpha = 1;
 		}
 
-		ctx.fillText(
-			'🧙‍♂️',
-			characterRoom.x * ROOM_SIZE + characterRoomPosition.x * CELL_SIZE,
-			characterRoom.y * ROOM_SIZE + characterRoomPosition.y * CELL_SIZE
-		);
+		if (account.$state.address) {
+			Blockie.get(account.$state.address).draw(
+				ctx,
+				characterRoom.x * ROOM_SIZE + characterRoomPosition.x * CELL_SIZE - CELL_SIZE / 2,
+				characterRoom.y * ROOM_SIZE + characterRoomPosition.y * CELL_SIZE - CELL_SIZE / 2,
+				8
+			);
+
+			// ctx.fillText(
+			// 	'🧙‍♂️',
+			// 	characterRoom.x * ROOM_SIZE + characterRoomPosition.x * CELL_SIZE,
+			// 	characterRoom.y * ROOM_SIZE + characterRoomPosition.y * CELL_SIZE
+			// );
+		}
 
 		// ctx.fillText('W', 0, 0);
 		// for (let y = 0; y < height; y += 50) {
