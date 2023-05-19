@@ -92,4 +92,37 @@ contract GreetingsRegistry is Proxied {
             Message({content: actualMessage, timestamp: block.timestamp, dayTimeInSeconds: dayTimeInSeconds});
         emit MessageChanged(msg.sender, block.timestamp, actualMessage, dayTimeInSeconds);
     }
+
+    uint256 constant TOTAL = 24 * 3600;
+    uint256 constant ACTION_PERIOD = 23 * 3600;
+    uint256 constant START_TIMESTAMP = 0;
+
+    function epoch() public returns (uint256) {
+        return (block.timestamp - START_TIMESTAMP) / TOTAL;
+    }
+
+    function isActionPeriod() public returns (bool) {
+        return (block.timestamp - epoch() * TOTAL) < ACTION_PERIOD;
+    }
+
+    function epochHash(uint256 epochToGenerate) public returns (bytes32) {
+        return keccak256(abi.encodePacked(epochToGenerate));
+    }
+
+    function epochHash() public returns (bytes32) {
+        return epochHash(epoch());
+    }
+
+    function roomID(int32 x, int32 y) public returns (uint256) {
+        //  BigInt(x) + 2n ** 31n + ((BigInt(y) + 2n ** 31n) << 32n);
+        return uint256(int256(x) + 2 ** 31) + (uint256(int256(y) + 2 ** 31) << 32);
+    }
+
+    function roomHash(int32 x, int32 y) public returns (bytes32) {
+        return roomHash(roomID(x, y));
+    }
+
+    function roomHash(uint256 id) public returns (bytes32) {
+        return keccak256(abi.encodePacked(epochHash(), id));
+    }
 }

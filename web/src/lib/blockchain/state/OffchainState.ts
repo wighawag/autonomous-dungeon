@@ -213,7 +213,7 @@ export function getRawRoom(x: number, y: number): RawRoom {
 	if (!room) {
 		const epochHash = offchainState.epochHash();
 		const roomID = xyToBigIntID(x, y);
-		const roomHashData = keccak256(encodePacked(['bytes32', 'uint64'], [epochHash, roomID]));
+		const roomHashData = keccak256(encodePacked(['bytes32', 'uint256'], [epochHash, roomID]));
 
 		// take from the first 0 (right side) and take 2 bits to give you a number between [0,2**2[
 		const firstExit = value(roomHashData, 0, 2);
