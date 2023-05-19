@@ -1,30 +1,24 @@
 import {writable, type Readable, type Subscriber, type Unsubscriber, type Writable} from 'svelte/store';
 import type {CameraState} from './camera';
 import type {RenderViewState} from './renderview';
-import {getRoom, offchainState, type Room} from '$lib/blockchain/state/OffchainState';
+import {getRoom, getRoomFromCell, offchainState, type Room} from '$lib/blockchain/state/OffchainState';
 
 const CELL_SIZE = 50;
 const ROOM_CELL_SIZE = 3;
 const ROOM_PADDING = 10;
 const ROOM_SIZE = CELL_SIZE * ROOM_CELL_SIZE + ROOM_PADDING * 2;
-const DOOR_SIZE = CELL_SIZE / 2;
-const WALL_STROKE_SIZE = 2;
+const DOOR_SIZE = ROOM_SIZE / 1;
+const WALL_STROKE_SIZE = 7;
 const FONT = `${CELL_SIZE}px serif`;
 
 const DOOR_SIDE_WALL_SIZE = (ROOM_SIZE - DOOR_SIZE) / 2;
 
 function drawWalls(ctx: CanvasRenderingContext2D, room: Room, cx: number, cy: number) {
-	if (room.x === 0 && room.y === 0) {
-		console.log(room);
-	}
-	if (room.x === 1 && room.y === 0) {
-		console.log(room);
-	}
 	const left = cx - ROOM_SIZE / 2;
 	const top = cy - ROOM_SIZE / 2;
 	const right = cx + ROOM_SIZE / 2;
 	const bottom = cy + ROOM_SIZE / 2;
-	ctx.fillText(`${room.x},${room.y}`, left, top);
+	// ctx.fillText(`${room.x},${room.y}`, left, top);
 	// north ctx.fillRect(left, top, ROOM_SIZE, WALL_STROKE_SIZE);
 	ctx.fillRect(left, top, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
 	if (!room.exits[0]) {
@@ -154,16 +148,24 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 
 		const character = offchainState.$state.position;
 		const characterRoom = {
-			x: Math.floor((offchainState.$state.position.x + 1) / 3),
-			y: Math.floor((offchainState.$state.position.y + 1) / 3),
+			x: Math.floor((offchainState.$state.position.cx + 1) / 3),
+			y: Math.floor((offchainState.$state.position.cy + 1) / 3),
 		};
-		ctx.fillStyle = 'red';
+		ctx.fillStyle = 'white';
+		ctx.strokeStyle = 'white';
 		const cx = characterRoom.x * ROOM_SIZE;
 		const cy = characterRoom.y * ROOM_SIZE;
-		drawWalls(ctx, getRoom(characterRoom.x, characterRoom.y), cx, cy);
+		// drawWalls(ctx, getRoomFromCell(character.cx, character.cy), cx, cy);
+		for (let suby = -1; suby <= 1; suby++) {
+			for (let subx = -1; subx <= 1; subx++) {
+				// ctx.fillText('-', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
+				// ctx.fillText('.', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
+				ctx.strokeRect(cx + subx * CELL_SIZE, cy + suby * CELL_SIZE, 3, 3);
+			}
+		}
 		const characterRoomPosition = {
-			x: offchainState.$state.position.x - characterRoom.x * 3,
-			y: offchainState.$state.position.y - characterRoom.y * 3,
+			x: offchainState.$state.position.cx - characterRoom.x * 3,
+			y: offchainState.$state.position.cy - characterRoom.y * 3,
 		};
 		ctx.fillText(
 			'🧙‍♂️',

@@ -4,8 +4,8 @@ import {slice} from 'viem';
 const logger = logs('offchain-state');
 
 export type Position = {
-	x: number;
-	y: number;
+	cx: number;
+	cy: number;
 };
 
 export type Action = {
@@ -18,18 +18,62 @@ export type OffchainState = {
 	actions: Action[];
 };
 
+export function direction(from: Position, to: Position): 0 | 1 | 2 | 3 | undefined {
+	const x_diff = to.cx - from.cx;
+	const y_diff = to.cy - from.cy;
+	if (x_diff === 0) {
+		if (y_diff === 1) {
+			return 2;
+		} else if (y_diff === -1) {
+			return 0;
+		} else {
+			return undefined;
+		}
+	} else if (from.cy == from.cy) {
+		if (x_diff === 1) {
+			return 1;
+		} else if (x_diff === -1) {
+			return 3;
+		} else {
+			return undefined;
+		}
+	} else {
+		return undefined;
+	}
+}
+
+export function getRoomFromCell(x: number, y: number): Room {
+	return getRoom(Math.floor((x + 1) / 3), Math.floor((y + 1) / 3));
+}
+
+export function isValidMove(from: Position, to: Position) {
+	const dir = direction(from, to);
+	if (typeof dir !== 'number') {
+		return false;
+	}
+	const from_room = getRoomFromCell(from.cx, from.cy);
+	const to_room = getRoomFromCell(to.cx, to.cy);
+	if (from_room === to_room) {
+		return true;
+	} else {
+		return from_room.exits[dir] && (from.cx % 3 === 0 || from.cy % 3 === 0);
+	}
+}
+
 export function initCharacter() {
 	const $state: OffchainState = {
-		position: {x: 0, y: 0},
+		position: {cx: 0, cy: 0},
 		actions: [],
 	};
 	const store = writable($state);
 
 	function move(to: Position) {
 		$state.actions.push({type: 'move', to});
-		$state.position.x = to.x;
-		$state.position.y = to.y;
-		store.set($state);
+		if (isValidMove($state.position, to)) {
+			$state.position.cx = to.cx;
+			$state.position.cy = to.cy;
+			store.set($state);
+		}
 	}
 
 	return {
@@ -43,8 +87,8 @@ export const offchainState = initCharacter();
 
 function positionFrom(position: Position, x: 0 | -1 | 1, y: 0 | -1 | 1) {
 	return {
-		x: position.x + x,
-		y: position.y + y,
+		cx: position.cx + x,
+		cy: position.cy + y,
 	};
 }
 
@@ -82,7 +126,8 @@ export function getRawRoom(x: number, y: number): RawRoom {
 	let room = raw_room_cache[key];
 	if (!room) {
 		const firstExit = Math.floor(Math.random() * 4);
-		const secondExit = (firstExit + (Math.floor(Math.random() * 3) + 1)) % 4;
+		const hasSecondExit = Math.random() < 0.1;
+		const secondExit = hasSecondExit ? (firstExit + (Math.floor(Math.random() * 3) + 1)) % 4 : 4;
 		// const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 		// const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 
