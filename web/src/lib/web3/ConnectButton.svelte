@@ -54,7 +54,7 @@
 			</button>
 		</div>
 		<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-		<ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-200 rounded-box w-52">
+		<ul tabindex="0" class="z-10 menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-200 rounded-box w-52">
 			<li>
 				<button class="m-1 btn btn-error text-error-content" on:click={() => connection.disconnect()}>disconnect</button
 				>

@@ -76,10 +76,35 @@ export function initCharacter() {
 		}
 	}
 
+	function reset() {
+		const firstAction = $state.actions[0];
+		$state.actions.splice(0, $state.actions.length);
+		if (firstAction) {
+			$state.position.cx = firstAction.from.cx;
+			$state.position.cy = firstAction.from.cy;
+		} else {
+			$state.position.cx = 0;
+			$state.position.cy = 0;
+		}
+
+		store.set($state);
+	}
+
+	function back() {
+		if ($state.actions.length > 0) {
+			$state.position.cx = $state.actions[$state.actions.length - 1].from.cx;
+			$state.position.cy = $state.actions[$state.actions.length - 1].from.cy;
+		}
+		$state.actions.splice($state.actions.length - 1, 1);
+		store.set($state);
+	}
+
 	return {
 		$state,
 		subscribe: store.subscribe,
 		move,
+		reset,
+		back,
 	};
 }
 
@@ -95,14 +120,16 @@ function positionFrom(position: Position, x: 0 | -1 | 1, y: 0 | -1 | 1) {
 if (typeof document !== 'undefined') {
 	window.addEventListener('keydown', (ev) => {
 		logger.info(ev);
-		if (ev.key === 'ArrowLeft' || ev.key === 'Left') {
+		if (ev.key === 'ArrowLeft' || ev.key === 'Left' || ev.key === 'a') {
 			offchainState.move(positionFrom(offchainState.$state.position, -1, 0));
-		} else if (ev.key === 'ArrowUp' || ev.key === 'Up') {
+		} else if (ev.key === 'ArrowUp' || ev.key === 'Up' || ev.key === 'w') {
 			offchainState.move(positionFrom(offchainState.$state.position, 0, -1));
-		} else if (ev.key === 'ArrowDown' || ev.key === 'Down') {
+		} else if (ev.key === 'ArrowDown' || ev.key === 'Down' || ev.key === 's') {
 			offchainState.move(positionFrom(offchainState.$state.position, 0, 1));
-		} else if (ev.key === 'ArrowRight' || ev.key === 'Right') {
+		} else if (ev.key === 'ArrowRight' || ev.key === 'Right' || ev.key === 'd') {
 			offchainState.move(positionFrom(offchainState.$state.position, 1, 0));
+		} else if (ev.key === 'Backspace') {
+			offchainState.back();
 		}
 	});
 }
