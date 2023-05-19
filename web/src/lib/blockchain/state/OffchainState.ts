@@ -61,3 +61,34 @@ if (typeof document !== 'undefined') {
 		}
 	});
 }
+
+export type Room = {
+	// north, east, west, south
+	exits: [boolean, boolean, boolean, boolean];
+	chest: boolean;
+	monster: boolean;
+};
+
+const cache: {[coords: string]: Room} = {};
+export function getRoom(x: number, y: number): Room {
+	const key = `${x},${y}`;
+	let room = cache[key];
+	if (!room) {
+		const firstExit = Math.floor(Math.random() * 4);
+		const secondExit = (firstExit + (Math.floor(Math.random() * 3) + 1)) % 4;
+		// const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
+		// const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
+		room = {
+			exits: [
+				firstExit === 0 || secondExit === 0,
+				firstExit === 1 || secondExit === 1,
+				firstExit === 2 || secondExit === 2,
+				firstExit === 3 || secondExit === 3,
+			],
+			chest: false,
+			monster: false,
+		};
+		cache[key] = room;
+	}
+	return room;
+}

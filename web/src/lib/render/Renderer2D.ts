@@ -1,7 +1,72 @@
 import {writable, type Readable, type Subscriber, type Unsubscriber, type Writable} from 'svelte/store';
 import type {CameraState} from './camera';
 import type {RenderViewState} from './renderview';
-import {offchainState} from '$lib/blockchain/state/OffchainState';
+import {getRoom, offchainState, type Room} from '$lib/blockchain/state/OffchainState';
+
+const CELL_SIZE = 50;
+const ROOM_CELL_SIZE = 3;
+const ROOM_SIZE = CELL_SIZE * ROOM_CELL_SIZE;
+const DOOR_SIZE = CELL_SIZE / 2;
+const WALL_STROKE_SIZE = 2;
+const FONT = `${CELL_SIZE}px serif`;
+
+const DOOR_SIDE_WALL_SIZE = (ROOM_SIZE - DOOR_SIZE) / 2;
+
+function drawWalls(
+	ctx: CanvasRenderingContext2D,
+	room: Room,
+	neighbors: [Room, Room, Room, Room],
+	cx: number,
+	cy: number
+) {
+	// north ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, ROOM_SIZE, WALL_STROKE_SIZE);
+	ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
+	if (!(room.exits[0] || neighbors[0].exits[2])) {
+		ctx.fillRect(cx - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE, cy - ROOM_SIZE / 2, DOOR_SIZE, WALL_STROKE_SIZE);
+	}
+	ctx.fillRect(
+		cx - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE + DOOR_SIZE,
+		cy - ROOM_SIZE / 2,
+		DOOR_SIDE_WALL_SIZE,
+		WALL_STROKE_SIZE
+	);
+
+	// east: ctx.fillRect(cx + ROOM_SIZE / 2, cy - ROOM_SIZE / 2, WALL_STROKE_SIZE, ROOM_SIZE);
+	ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, WALL_STROKE_SIZE, DOOR_SIDE_WALL_SIZE);
+	if (!(room.exits[1] || neighbors[1].exits[3])) {
+		ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE, DOOR_SIZE);
+	}
+	ctx.fillRect(
+		cx - ROOM_SIZE / 2,
+		cy - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE + DOOR_SIZE,
+		WALL_STROKE_SIZE,
+		DOOR_SIDE_WALL_SIZE
+	);
+
+	// south ctx.fillRect(cx - ROOM_SIZE / 2, cy + ROOM_SIZE / 2, ROOM_SIZE, WALL_STROKE_SIZE);
+	ctx.fillRect(cx - ROOM_SIZE / 2, cy + ROOM_SIZE / 2, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
+	if (!(room.exits[2] || neighbors[2].exits[0])) {
+		ctx.fillRect(cx - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE, cy + ROOM_SIZE / 2, DOOR_SIZE, WALL_STROKE_SIZE);
+	}
+	ctx.fillRect(
+		cx - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE + DOOR_SIZE,
+		cy + ROOM_SIZE / 2,
+		DOOR_SIDE_WALL_SIZE,
+		WALL_STROKE_SIZE
+	);
+
+	// west ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, WALL_STROKE_SIZE, ROOM_SIZE);
+	ctx.fillRect(cx + ROOM_SIZE / 2, cy - ROOM_SIZE / 2, WALL_STROKE_SIZE, DOOR_SIDE_WALL_SIZE);
+	if (!(room.exits[3] || neighbors[3].exits[1])) {
+		ctx.fillRect(cx + ROOM_SIZE / 2, cy - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE, DOOR_SIZE);
+	}
+	ctx.fillRect(
+		cx + ROOM_SIZE / 2,
+		cy - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE + DOOR_SIZE,
+		WALL_STROKE_SIZE,
+		DOOR_SIDE_WALL_SIZE
+	);
+}
 
 export class WebGLRenderer implements Readable<RenderViewState> {
 	// private state: Data;
@@ -64,10 +129,7 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 		ctx.textBaseline = 'middle';
 		ctx.fillStyle = 'black';
 
-		const CELL_SIZE = 50;
-		const ROOM_CELL_SIZE = 3;
-		const ROOM_SIZE = CELL_SIZE * ROOM_CELL_SIZE;
-		ctx.font = `${CELL_SIZE}px serif`;
+		ctx.font = FONT;
 
 		const visualWidth = Math.ceil(this.cameraState.width / ROOM_SIZE);
 		const visualHeight = Math.ceil(this.cameraState.height / ROOM_SIZE);
@@ -78,12 +140,11 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 
 		for (let y = top; y <= bottom; y++) {
 			for (let x = left; x <= right; x++) {
+				const room = getRoom(x, y);
+
 				const cx = x * ROOM_SIZE;
 				const cy = y * ROOM_SIZE;
-				ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, ROOM_SIZE, 1);
-				ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, 1, ROOM_SIZE);
-				ctx.fillRect(cx - ROOM_SIZE / 2, cy + ROOM_SIZE / 2, ROOM_SIZE, 1);
-				ctx.fillRect(cx + ROOM_SIZE / 2, cy - ROOM_SIZE / 2, 1, ROOM_SIZE);
+				drawWalls(ctx, room, [getRoom(x, y - 1), getRoom(x + 1, y), getRoom(x, y + 1), getRoom(x - 1, y)], cx, cy);
 				for (let suby = -1; suby <= 1; suby++) {
 					for (let subx = -1; subx <= 1; subx++) {
 						ctx.fillText('.', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
