@@ -5,67 +5,53 @@ import {getRoom, offchainState, type Room} from '$lib/blockchain/state/OffchainS
 
 const CELL_SIZE = 50;
 const ROOM_CELL_SIZE = 3;
-const ROOM_SIZE = CELL_SIZE * ROOM_CELL_SIZE;
+const ROOM_PADDING = 10;
+const ROOM_SIZE = CELL_SIZE * ROOM_CELL_SIZE + ROOM_PADDING * 2;
 const DOOR_SIZE = CELL_SIZE / 2;
 const WALL_STROKE_SIZE = 2;
 const FONT = `${CELL_SIZE}px serif`;
 
 const DOOR_SIDE_WALL_SIZE = (ROOM_SIZE - DOOR_SIZE) / 2;
 
-function drawWalls(
-	ctx: CanvasRenderingContext2D,
-	room: Room,
-	neighbors: [Room, Room, Room, Room],
-	cx: number,
-	cy: number
-) {
-	// north ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, ROOM_SIZE, WALL_STROKE_SIZE);
-	ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
-	if (!(room.exits[0] || neighbors[0].exits[2])) {
-		ctx.fillRect(cx - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE, cy - ROOM_SIZE / 2, DOOR_SIZE, WALL_STROKE_SIZE);
+function drawWalls(ctx: CanvasRenderingContext2D, room: Room, cx: number, cy: number) {
+	if (room.x === 0 && room.y === 0) {
+		console.log(room);
 	}
-	ctx.fillRect(
-		cx - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE + DOOR_SIZE,
-		cy - ROOM_SIZE / 2,
-		DOOR_SIDE_WALL_SIZE,
-		WALL_STROKE_SIZE
-	);
+	if (room.x === 1 && room.y === 0) {
+		console.log(room);
+	}
+	const left = cx - ROOM_SIZE / 2;
+	const top = cy - ROOM_SIZE / 2;
+	const right = cx + ROOM_SIZE / 2;
+	const bottom = cy + ROOM_SIZE / 2;
+	ctx.fillText(`${room.x},${room.y}`, left, top);
+	// north ctx.fillRect(left, top, ROOM_SIZE, WALL_STROKE_SIZE);
+	ctx.fillRect(left, top, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
+	if (!room.exits[0]) {
+		ctx.fillRect(left + DOOR_SIDE_WALL_SIZE, top, DOOR_SIZE, WALL_STROKE_SIZE);
+	}
+	ctx.fillRect(left + DOOR_SIDE_WALL_SIZE + DOOR_SIZE, top, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
 
-	// east: ctx.fillRect(cx + ROOM_SIZE / 2, cy - ROOM_SIZE / 2, WALL_STROKE_SIZE, ROOM_SIZE);
-	ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, WALL_STROKE_SIZE, DOOR_SIDE_WALL_SIZE);
-	if (!(room.exits[1] || neighbors[1].exits[3])) {
-		ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE, DOOR_SIZE);
+	// east: ctx.fillRect(cx + ROOM_SIZE / 2, top, WALL_STROKE_SIZE, ROOM_SIZE);
+	ctx.fillRect(right, top, WALL_STROKE_SIZE, DOOR_SIDE_WALL_SIZE);
+	if (!room.exits[1]) {
+		ctx.fillRect(right, top + DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE, DOOR_SIZE);
 	}
-	ctx.fillRect(
-		cx - ROOM_SIZE / 2,
-		cy - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE + DOOR_SIZE,
-		WALL_STROKE_SIZE,
-		DOOR_SIDE_WALL_SIZE
-	);
+	ctx.fillRect(right, top + DOOR_SIDE_WALL_SIZE + DOOR_SIZE, WALL_STROKE_SIZE, DOOR_SIDE_WALL_SIZE);
 
-	// south ctx.fillRect(cx - ROOM_SIZE / 2, cy + ROOM_SIZE / 2, ROOM_SIZE, WALL_STROKE_SIZE);
-	ctx.fillRect(cx - ROOM_SIZE / 2, cy + ROOM_SIZE / 2, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
-	if (!(room.exits[2] || neighbors[2].exits[0])) {
-		ctx.fillRect(cx - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE, cy + ROOM_SIZE / 2, DOOR_SIZE, WALL_STROKE_SIZE);
+	// south ctx.fillRect(left, bottom, ROOM_SIZE, WALL_STROKE_SIZE);
+	ctx.fillRect(left, bottom, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
+	if (!room.exits[2]) {
+		ctx.fillRect(left + DOOR_SIDE_WALL_SIZE, bottom, DOOR_SIZE, WALL_STROKE_SIZE);
 	}
-	ctx.fillRect(
-		cx - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE + DOOR_SIZE,
-		cy + ROOM_SIZE / 2,
-		DOOR_SIDE_WALL_SIZE,
-		WALL_STROKE_SIZE
-	);
+	ctx.fillRect(left + DOOR_SIDE_WALL_SIZE + DOOR_SIZE, bottom, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
 
-	// west ctx.fillRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, WALL_STROKE_SIZE, ROOM_SIZE);
-	ctx.fillRect(cx + ROOM_SIZE / 2, cy - ROOM_SIZE / 2, WALL_STROKE_SIZE, DOOR_SIDE_WALL_SIZE);
-	if (!(room.exits[3] || neighbors[3].exits[1])) {
-		ctx.fillRect(cx + ROOM_SIZE / 2, cy - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE, DOOR_SIZE);
+	// west ctx.fillRect(left, top, WALL_STROKE_SIZE, ROOM_SIZE);
+	ctx.fillRect(left, top, WALL_STROKE_SIZE, DOOR_SIDE_WALL_SIZE);
+	if (!room.exits[3]) {
+		ctx.fillRect(left, top + DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE, DOOR_SIZE);
 	}
-	ctx.fillRect(
-		cx + ROOM_SIZE / 2,
-		cy - ROOM_SIZE / 2 + DOOR_SIDE_WALL_SIZE + DOOR_SIZE,
-		WALL_STROKE_SIZE,
-		DOOR_SIDE_WALL_SIZE
-	);
+	ctx.fillRect(left, top + DOOR_SIDE_WALL_SIZE + DOOR_SIZE, WALL_STROKE_SIZE, DOOR_SIDE_WALL_SIZE);
 }
 
 export class WebGLRenderer implements Readable<RenderViewState> {
@@ -128,6 +114,7 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
 		ctx.fillStyle = 'black';
+		ctx.strokeStyle = 'black';
 
 		ctx.font = FONT;
 
@@ -144,17 +131,45 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 
 				const cx = x * ROOM_SIZE;
 				const cy = y * ROOM_SIZE;
-				drawWalls(ctx, room, [getRoom(x, y - 1), getRoom(x + 1, y), getRoom(x, y + 1), getRoom(x - 1, y)], cx, cy);
+				drawWalls(ctx, room, cx, cy);
+
 				for (let suby = -1; suby <= 1; suby++) {
 					for (let subx = -1; subx <= 1; subx++) {
-						ctx.fillText('.', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
+						// ctx.fillText('-', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
+						// ctx.fillText('.', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
+						ctx.strokeRect(cx + subx * CELL_SIZE, cy + suby * CELL_SIZE, 3, 3);
 					}
+				}
+
+				if (room.monster) {
+					ctx.fillText('🐉', cx + -1 * CELL_SIZE, cy + -1 * CELL_SIZE);
+				}
+
+				if (room.chest) {
+					ctx.fillText('💰', cx + 1 * CELL_SIZE, cy + 1 * CELL_SIZE);
+					// 🗝
 				}
 			}
 		}
 
 		const character = offchainState.$state.position;
-		ctx.fillText('😀', character.x * CELL_SIZE, character.y * CELL_SIZE);
+		const characterRoom = {
+			x: Math.floor((offchainState.$state.position.x + 1) / 3),
+			y: Math.floor((offchainState.$state.position.y + 1) / 3),
+		};
+		ctx.fillStyle = 'red';
+		const cx = characterRoom.x * ROOM_SIZE;
+		const cy = characterRoom.y * ROOM_SIZE;
+		drawWalls(ctx, getRoom(characterRoom.x, characterRoom.y), cx, cy);
+		const characterRoomPosition = {
+			x: offchainState.$state.position.x - characterRoom.x * 3,
+			y: offchainState.$state.position.y - characterRoom.y * 3,
+		};
+		ctx.fillText(
+			'🧙‍♂️',
+			characterRoom.x * ROOM_SIZE + characterRoomPosition.x * CELL_SIZE,
+			characterRoom.y * ROOM_SIZE + characterRoomPosition.y * CELL_SIZE
+		);
 
 		// ctx.fillText('W', 0, 0);
 		// for (let y = 0; y < height; y += 50) {
