@@ -14,13 +14,17 @@
 			});
 		});
 	}
+
+	$: actionsLeft = offchainState.max - $offchainState.actions.length;
 </script>
 
 {#if $offchainState.actions.length > 0}
-	<div class="fixed top-20 right-0 card w-96 bg-neutral text-neutral-content m-1">
+	<div
+		class={`fixed top-20 right-0 card w-96 ${actionsLeft <= 0 ? 'bg-red-500' : 'bg-neutral'} text-neutral-content m-1`}
+	>
 		<div class="card-body items-center text-center">
 			<h2 class="card-title">Ready to Commit?</h2>
-			<p>You have {64 - $offchainState.actions.length} actions left</p>
+			<p>You have {actionsLeft} actions left</p>
 			<div class="card-actions justify-end">
 				<button class="btn btn-primary" on:click={() => commit()}>Commit</button>
 				<button class="btn btn-ghost" on:click={() => reset()}>Reset</button>

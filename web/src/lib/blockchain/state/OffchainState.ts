@@ -61,6 +61,7 @@ export function isValidMove(from: Position, to: Position) {
 }
 
 export function initCharacter() {
+	const max = 64;
 	const $state: OffchainState = {
 		position: {cx: 0, cy: 0},
 		actions: [],
@@ -68,7 +69,7 @@ export function initCharacter() {
 	const store = writable($state);
 
 	function move(to: Position) {
-		if (isValidMove($state.position, to)) {
+		if ($state.actions.length < 64 && isValidMove($state.position, to)) {
 			$state.actions.push({type: 'move', to, from: {...$state.position}});
 			$state.position.cx = to.cx;
 			$state.position.cy = to.cy;
@@ -105,6 +106,7 @@ export function initCharacter() {
 		move,
 		reset,
 		back,
+		max,
 	};
 }
 
