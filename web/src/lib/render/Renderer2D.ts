@@ -126,7 +126,7 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 
 		for (let y = top; y <= bottom; y++) {
 			for (let x = left; x <= right; x++) {
-				const room = controller.dungeon.getRoom(x, y);
+				const room = controller.dungeon.$state.getRoom(x, y);
 
 				const cx = x * ROOM_SIZE;
 				const cy = y * ROOM_SIZE;

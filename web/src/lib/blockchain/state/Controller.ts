@@ -4,6 +4,7 @@ import {encodePacked, keccak256} from 'viem';
 import {accountData} from '$lib/web3';
 import {derived, writable} from 'svelte/store';
 import {time} from '$lib/time';
+import {state} from './State';
 
 const logger = logs('controller');
 
@@ -14,16 +15,26 @@ const START_TIMESTAMP = 0;
 export function initController() {
 	const max = 64;
 
-	const epoch = {
-		hash: getEpochHash(),
-	};
-	let dungeon = generateEpoch(epoch.hash);
+	let $dungeon = generateEpoch(getEpochHash(0));
+	const dungeon = writable($dungeon);
+
+	state.subscribe((v) => {
+		// if (v)
+		// TODO update epochHash
+	});
+	//for now it is based on time
+	time.subscribe((v) => {
+		const currentHash = getEpochHash(getEpoch(v));
+		if (currentHash !== $dungeon.epoch.hash) {
+			$dungeon = generateEpoch(currentHash);
+			dungeon.set($dungeon);
+		}
+	});
 
 	function move(to: CellPosition) {
 		const $state = accountData.$offchainState;
-		if ($state.actions.length < 64 && dungeon.isValidCellMove($state.position, to)) {
-			// TODO epochHash from dungeon?
-			accountData.offchainState.move(epoch, to);
+		if ($state.actions.length < 64 && $dungeon.isValidCellMove($state.position, to)) {
+			accountData.offchainState.move($dungeon.epoch, to);
 		}
 	}
 
@@ -35,23 +46,11 @@ export function initController() {
 		accountData.offchainState.back();
 	}
 
-	function timestamp() {
-		return Math.floor(Date.now() / 1000);
+	function getEpoch(time: number) {
+		return Math.floor((time - START_TIMESTAMP) / TOTAL);
 	}
 
-	function getEpoch() {
-		return Math.floor((timestamp() - START_TIMESTAMP) / TOTAL);
-	}
-
-	function isActionPeriod() {
-		return timestamp() - getEpoch() * TOTAL < ACTION_PERIOD;
-	}
-
-	function getEpochHash(epochToGenerate?: number) {
-		if (!epochToGenerate) {
-			epochToGenerate = getEpoch();
-		}
-		// TODO fetch from contract
+	function getEpochHash(epochToGenerate: number) {
 		return keccak256(encodePacked(['uint256'], [BigInt(epochToGenerate)]));
 	}
 
@@ -78,7 +77,12 @@ export function initController() {
 		reset,
 		back,
 		max,
-		dungeon,
+		dungeon: {
+			subscribe: dungeon.subscribe,
+			get $state() {
+				return $dungeon;
+			},
+		},
 	};
 }
 

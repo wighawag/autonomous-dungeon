@@ -235,6 +235,9 @@ export function generateEpoch(epochHash: `0x${string}`) {
 		getRoom,
 		getRoomFromCell,
 		isValidCellMove,
+		epoch: {
+			hash: epochHash,
+		},
 	};
 }
 
