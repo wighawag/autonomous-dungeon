@@ -41,9 +41,7 @@ export function initAccountData() {
 
 	let key: string | undefined;
 	async function load(address: `0x${string}`, chainId: string, genesisHash?: string) {
-		key = `account_${address}_${chainId}_${genesisHash}`;
-		const dataSTR = localStorage.getItem(key);
-		const data: AccountData = dataSTR ? JSON.parse(dataSTR) : {onchainActions: {}};
+		const data = await _load(address, chainId, genesisHash);
 		const pending_transactions: PendingTransaction[] = [];
 		for (const hash in data.onchainActions) {
 			const onchainAction = (data.onchainActions as any)[hash];
@@ -67,8 +65,21 @@ export function initAccountData() {
 	}
 
 	async function save() {
+		_save({onchainActions: $onchainActions});
+	}
+
+	async function _load(address: `0x${string}`, chainId: string, genesisHash?: string): Promise<AccountData> {
+		key = `account_${address}_${chainId}_${genesisHash}`;
+		let dataSTR: string | undefined | null;
+		try {
+			dataSTR = localStorage.getItem(key);
+		} catch {}
+		return dataSTR ? JSON.parse(dataSTR) : {onchainActions: {}};
+	}
+
+	async function _save(accountData: AccountData) {
 		if (key) {
-			localStorage.setItem(key, JSON.stringify({onchainActions: $onchainActions}));
+			localStorage.setItem(key, JSON.stringify(accountData));
 		}
 	}
 
