@@ -4,7 +4,7 @@ import type {EIP1193TransactionWithMetadata} from 'web3-connection';
 import {initEmitter} from '$external/callbacks';
 import type {PendingTransaction} from '$external/tx-observer';
 
-export type Action = {
+export type OnChainAction = {
 	tx: EIP1193TransactionWithMetadata;
 } & (
 	| {
@@ -19,37 +19,37 @@ export type Action = {
 	  }
 );
 
-export type Actions = {[hash: `0x${string}`]: Action};
+export type OnChainActions = {[hash: `0x${string}`]: OnChainAction};
 
-function fromActionToPendingTransaction(hash: `0x${string}`, action: Action): PendingTransaction {
+function fromActionToPendingTransaction(hash: `0x${string}`, onchainAction: OnChainAction): PendingTransaction {
 	return {
 		hash,
-		request: action.tx,
-		final: action.final,
-		inclusion: action.inclusion,
-		status: action.status,
+		request: onchainAction.tx,
+		final: onchainAction.final,
+		inclusion: onchainAction.inclusion,
+		status: onchainAction.status,
 	} as PendingTransaction;
 }
 
 export function initAccountData() {
 	const emitter = initEmitter<{name: 'newTx'; txs: PendingTransaction[]} | {name: 'clear'}>();
 
-	const $actions: Actions = {};
-	const actions = writable<Actions>($actions);
+	const $onchainActions: OnChainActions = {};
+	const onchainActions = writable<OnChainActions>($onchainActions);
 
 	let key: string | undefined;
 	async function load(address: `0x${string}`, chainId: string, genesisHash?: string) {
 		key = `account_${address}_${chainId}_${genesisHash}`;
 		const dataSTR = localStorage.getItem(key);
-		const data: {actions: Actions} = dataSTR ? JSON.parse(dataSTR) : {actions: {}};
+		const data: {onchainActions: OnChainActions} = dataSTR ? JSON.parse(dataSTR) : {onchainActions: {}};
 		const pending_transactions: PendingTransaction[] = [];
-		for (const hash in data.actions) {
-			const action = (data.actions as any)[hash];
-			($actions as any)[hash] = action;
-			pending_transactions.push(fromActionToPendingTransaction(hash as `0x${string}`, action));
+		for (const hash in data.onchainActions) {
+			const onchainAction = (data.onchainActions as any)[hash];
+			($onchainActions as any)[hash] = onchainAction;
+			pending_transactions.push(fromActionToPendingTransaction(hash as `0x${string}`, onchainAction));
 		}
 		emitter.emit({name: 'newTx', txs: pending_transactions});
-		actions.set($actions);
+		onchainActions.set($onchainActions);
 	}
 
 	async function unload() {
@@ -57,21 +57,21 @@ export function initAccountData() {
 		await save();
 
 		// delete all
-		for (const hash of Object.keys($actions)) {
-			delete ($actions as any)[hash];
+		for (const hash of Object.keys($onchainActions)) {
+			delete ($onchainActions as any)[hash];
 		}
-		actions.set($actions);
+		onchainActions.set($onchainActions);
 		emitter.emit({name: 'clear'});
 	}
 
 	async function save() {
 		if (key) {
-			localStorage.setItem(key, JSON.stringify({actions: $actions}));
+			localStorage.setItem(key, JSON.stringify({onchainActions: $onchainActions}));
 		}
 	}
 
 	function addAction(tx: EIP1193TransactionWithMetadata, hash: `0x${string}`, inclusion?: 'Broadcasted') {
-		const action: Action = {
+		const onchainAction: OnChainAction = {
 			tx,
 			inclusion: inclusion || 'BeingFetched',
 			final: undefined,
@@ -80,19 +80,19 @@ export function initAccountData() {
 
 		if (key) {
 			// TODO optimize this ? currently write on every add, use dedupe
-			localStorage.setItem(key, JSON.stringify({actions: $actions}));
+			localStorage.setItem(key, JSON.stringify({actions: $onchainActions}));
 		}
-		$actions[hash] = action;
-		actions.set($actions);
+		$onchainActions[hash] = onchainAction;
+		onchainActions.set($onchainActions);
 
 		emitter.emit({
 			name: 'newTx',
-			txs: [fromActionToPendingTransaction(hash, action)],
+			txs: [fromActionToPendingTransaction(hash, onchainAction)],
 		});
 	}
 
 	function _updateTx(pendingTransaction: PendingTransaction) {
-		const action = $actions[pendingTransaction.hash];
+		const action = $onchainActions[pendingTransaction.hash];
 		if (action) {
 			action.inclusion = pendingTransaction.inclusion;
 			action.status = pendingTransaction.status;
@@ -100,14 +100,14 @@ export function initAccountData() {
 
 			// TODO specific to jolly-roger which does not need user acknowledgement for deleting the actions
 			if (action.final) {
-				delete $actions[pendingTransaction.hash];
+				delete $onchainActions[pendingTransaction.hash];
 			}
 		}
 	}
 
 	function updateTx(pendingTransaction: PendingTransaction) {
 		_updateTx(pendingTransaction);
-		actions.set($actions);
+		onchainActions.set($onchainActions);
 		save();
 	}
 
@@ -115,7 +115,7 @@ export function initAccountData() {
 		for (const p of pendingTransactions) {
 			_updateTx(p);
 		}
-		actions.set($actions);
+		onchainActions.set($onchainActions);
 		save();
 	}
 
@@ -128,8 +128,8 @@ export function initAccountData() {
 	}
 
 	return {
-		actions: {
-			subscribe: actions.subscribe,
+		onchainActions: {
+			subscribe: onchainActions.subscribe,
 		},
 
 		load,
