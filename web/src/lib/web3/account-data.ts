@@ -21,7 +21,7 @@ export type OnChainAction = {
 
 export type OnChainActions = {[hash: `0x${string}`]: OnChainAction};
 
-function fromActionToPendingTransaction(hash: `0x${string}`, onchainAction: OnChainAction): PendingTransaction {
+function fromOnChainActionToPendingTransaction(hash: `0x${string}`, onchainAction: OnChainAction): PendingTransaction {
 	return {
 		hash,
 		request: onchainAction.tx,
@@ -46,7 +46,7 @@ export function initAccountData() {
 		for (const hash in data.onchainActions) {
 			const onchainAction = (data.onchainActions as any)[hash];
 			($onchainActions as any)[hash] = onchainAction;
-			pending_transactions.push(fromActionToPendingTransaction(hash as `0x${string}`, onchainAction));
+			pending_transactions.push(fromOnChainActionToPendingTransaction(hash as `0x${string}`, onchainAction));
 		}
 		emitter.emit({name: 'newTx', txs: pending_transactions});
 		onchainActions.set($onchainActions);
@@ -87,7 +87,7 @@ export function initAccountData() {
 
 		emitter.emit({
 			name: 'newTx',
-			txs: [fromActionToPendingTransaction(hash, onchainAction)],
+			txs: [fromOnChainActionToPendingTransaction(hash, onchainAction)],
 		});
 	}
 
