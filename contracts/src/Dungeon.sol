@@ -210,7 +210,7 @@ contract Dungeon is Proxied {
 
         (uint32 epoch, bool commiting) = _epoch();
 
-        if (commitment.epoch != epoch) {
+        if (commitment.epoch != 0 && commitment.epoch != epoch) {
             // TODO make it count
             // if we set to zero life, then we should make it a separate tx, for anyone to claim ? instea do inside this if statement
             characters[msg.sender].life = 0;

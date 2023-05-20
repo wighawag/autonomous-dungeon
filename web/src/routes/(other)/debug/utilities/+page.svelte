@@ -1,34 +1,31 @@
 <script lang="ts">
 	import {time} from '$lib/time';
-	import {connection} from '$lib/web3';
-	import {createTestClient, http} from 'viem';
-	import {foundry} from 'viem/chains';
+	import {devProvider} from '$lib/web3';
 
 	let error: any;
 	let state: undefined | 'setNextBlockTimestamp' | 'mine' | 'syncTime' | 'block';
 
 	async function addTime(numHours: number) {
-		const client = createTestClient({
-			chain: foundry,
-			mode: 'anvil',
-			transport: http(),
-		});
-
 		try {
+			const block = await devProvider?.request({
+				method: 'eth_getBlockByNumber',
+				params: ['latest', false],
+			});
+			if (!block) {
+				throw new Error(`no block can be fetched`);
+			}
+			const old_timestamp = parseInt(block.timestamp.slice(2), 16);
 			state = 'setNextBlockTimestamp';
-			const old_timestamp = await $connection.provider!.syncTime();
-			await client.setNextBlockTimestamp({
-				timestamp: BigInt(old_timestamp + numHours * 3600),
-			});
+			await devProvider?.request({
+				method: 'evm_setNextBlockTimestamp',
+				params: [`0x` + BigInt(old_timestamp + numHours * 3600).toString(16)],
+			} as any);
 			state = 'mine';
-			await client.mine({
-				blocks: 1,
-			});
+			await devProvider?.request({
+				method: 'evm_mine',
+				params: [],
+			} as any);
 			state = 'block';
-			await $connection.provider!.waitNewBlock();
-			state = 'syncTime';
-			const timestamp = await $connection.provider!.syncTime();
-			console.log(new Date(timestamp * 1000).toLocaleTimeString());
 		} catch (err: any) {
 			console.error(err);
 			error = err;
@@ -48,7 +45,7 @@
 {#if error}
 	{error.message}
 	<button class={`btn btn-error m-2`} on:click={() => (error = undefined)}>OK</button>
-{:else if $connection.provider}
+{:else}
 	<button class={`btn btn-secondary ${state ? 'btn-disabled' : ''} m-2`} on:click={() => addTime(1)}>Add 1 hour</button>
 	<button class={`btn btn-secondary ${state ? 'btn-disabled' : ''} m-2`} on:click={() => addTime(23)}
 		>Add 23 hour</button
@@ -60,6 +57,4 @@
 			>Add {hours} hours</button
 		>
 	</form>
-{:else}
-	<button on:click={() => connection.connect()} class="btn btn-error">Connect</button>
 {/if}

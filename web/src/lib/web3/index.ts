@@ -69,7 +69,15 @@ const stores = init({
 			// console.log(`DONE unloading for ${tmp.address} (${tmp.chainId})`);
 		},
 	},
-	checkGenesis: localRPC,
+	devNetwork:
+		// does not connect through node, so only enable devNetwork when in the browser
+		typeof window != 'undefined' && localRPC
+			? {
+					url: localRPC.url,
+					chainId: localRPC.chainId,
+					checkGenesis: true,
+			  }
+			: undefined,
 });
 
 export const txObserver = initTransactionProcessor({finality: 12}); // TODO config.finality
@@ -107,7 +115,7 @@ contractsInfos.subscribe((contractsInfos) => {
 	stores.connection.updateContractsInfos(contractsInfos);
 });
 
-export const {connection, network, account, pendingActions, execution, execute} = stores;
+export const {connection, network, account, pendingActions, execution, execute, devProvider} = stores;
 
 if (typeof window !== 'undefined') {
 	(window as any).execution = execution;
