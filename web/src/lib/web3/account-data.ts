@@ -3,7 +3,7 @@ import {writable} from 'svelte/store';
 import type {EIP1193TransactionWithMetadata} from 'web3-connection';
 import {initEmitter} from '$external/callbacks';
 import type {PendingTransaction} from '$external/tx-observer';
-import type {Action, Position} from 'jolly-roger-common';
+import type {CellAction, CellPosition} from 'jolly-roger-common';
 
 export type OnChainAction = {
 	tx: EIP1193TransactionWithMetadata;
@@ -25,8 +25,8 @@ export type OnChainActions = {[hash: `0x${string}`]: OnChainAction};
 
 export type OffchainState = {
 	epoch?: Epoch;
-	position: Position;
-	actions: Action[];
+	position: CellPosition;
+	actions: CellAction[];
 };
 
 export type AccountData = {
@@ -194,7 +194,7 @@ export function initAccountData() {
 		offchainState.set($offchainState);
 	}
 
-	function move(epoch: Epoch, to: Position) {
+	function move(epoch: Epoch, to: CellPosition) {
 		if ($offchainState.epoch && epoch.hash !== $offchainState.epoch.hash) {
 			resetOffchainState(false);
 			$offchainState.epoch = epoch;

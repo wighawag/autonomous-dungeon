@@ -10,7 +10,11 @@
 	}
 
 	function commit() {
-		contracts.execute(async ({contracts}) => {
+		contracts.execute(async ({contracts, connection}) => {
+			const actions = accountData.$offchainState.actions;
+			connection.provider.setNextMetadata({
+				actions: actions,
+			});
 			contracts.Dungeon.write({
 				functionName: 'makeCommitment',
 				args: ['0x'], // TODO

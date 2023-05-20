@@ -1,14 +1,20 @@
 import {encodePacked, keccak256} from 'viem';
 
-export type Position = {
+export type CellPosition = {
 	cx: number;
 	cy: number;
 };
 
-export type Action = {
+export type CellAction = {
 	type: 'move';
-	from: Position; // not really needed, // TODO remove
-	to: Position;
+	from: CellPosition; // not really needed, // TODO remove
+	to: CellPosition;
+};
+
+export type RoomAction = {
+	type: 'move';
+	from: RoomPosition; // not really needed, // TODO remove
+	to: RoomPosition;
 };
 
 export type RoomPosition = {
@@ -16,9 +22,31 @@ export type RoomPosition = {
 	y: number;
 };
 
-export function direction(from: Position, to: Position): 0 | 1 | 2 | 3 | undefined {
+export function cellDirection(from: CellPosition, to: CellPosition): 0 | 1 | 2 | 3 | undefined {
 	const x_diff = to.cx - from.cx;
 	const y_diff = to.cy - from.cy;
+	if (x_diff === 0) {
+		if (y_diff === 1) {
+			return 2;
+		} else if (y_diff === -1) {
+			return 0;
+		} else {
+			return undefined;
+		}
+	} else {
+		if (x_diff === 1) {
+			return 1;
+		} else if (x_diff === -1) {
+			return 3;
+		} else {
+			return undefined;
+		}
+	}
+}
+
+export function roomDirection(from: RoomPosition, to: RoomPosition): 0 | 1 | 2 | 3 | undefined {
+	const x_diff = to.x - from.x;
+	const y_diff = to.y - from.y;
 	if (x_diff === 0) {
 		if (y_diff === 1) {
 			return 2;
@@ -160,8 +188,8 @@ export function generateEpoch(epochHash: `0x${string}`) {
 		return getRoom(Math.floor((x + 1) / 3), Math.floor((y + 1) / 3));
 	}
 
-	function isValidMove(from: Position, to: Position) {
-		const dir = direction(from, to);
+	function isValidCellMove(from: CellPosition, to: CellPosition) {
+		const dir = cellDirection(from, to);
 		if (typeof dir !== 'number') {
 			return false;
 		}
@@ -178,11 +206,11 @@ export function generateEpoch(epochHash: `0x${string}`) {
 		getRawRoom,
 		getRoom,
 		getRoomFromCell,
-		isValidMove,
+		isValidCellMove,
 	};
 }
 
-export function positionFrom(position: Position, x: 0 | -1 | 1, y: 0 | -1 | 1) {
+export function cellPositionFrom(position: CellPosition, x: 0 | -1 | 1, y: 0 | -1 | 1) {
 	return {
 		cx: position.cx + x,
 		cy: position.cy + y,

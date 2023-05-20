@@ -1,5 +1,5 @@
 import {logs} from 'named-logs';
-import {type Position, type Action, generateEpoch, positionFrom} from 'jolly-roger-common';
+import {type CellPosition, type CellAction, generateEpoch, cellPositionFrom} from 'jolly-roger-common';
 import {encodePacked, keccak256} from 'viem';
 import {accountData} from '$lib/web3';
 
@@ -16,9 +16,9 @@ export function initController() {
 	};
 	let dungeon = generateEpoch(epoch.hash);
 
-	function move(to: Position) {
+	function move(to: CellPosition) {
 		const $state = accountData.$offchainState;
-		if ($state.actions.length < 64 && dungeon.isValidMove($state.position, to)) {
+		if ($state.actions.length < 64 && dungeon.isValidCellMove($state.position, to)) {
 			// TODO epochHash from dungeon?
 			accountData.offchainState.move(epoch, to);
 		}
@@ -57,13 +57,13 @@ export function initController() {
 			logger.info(ev);
 			const $state = accountData.$offchainState;
 			if (ev.key === 'ArrowLeft' || ev.key === 'Left' || ev.key === 'a') {
-				move(positionFrom($state.position, -1, 0));
+				move(cellPositionFrom($state.position, -1, 0));
 			} else if (ev.key === 'ArrowUp' || ev.key === 'Up' || ev.key === 'w') {
-				move(positionFrom($state.position, 0, -1));
+				move(cellPositionFrom($state.position, 0, -1));
 			} else if (ev.key === 'ArrowDown' || ev.key === 'Down' || ev.key === 's') {
-				move(positionFrom($state.position, 0, 1));
+				move(cellPositionFrom($state.position, 0, 1));
 			} else if (ev.key === 'ArrowRight' || ev.key === 'Right' || ev.key === 'd') {
-				move(positionFrom($state.position, 1, 0));
+				move(cellPositionFrom($state.position, 1, 0));
 			} else if (ev.key === 'Backspace') {
 				back();
 			}
