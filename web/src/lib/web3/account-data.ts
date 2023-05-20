@@ -93,6 +93,10 @@ export function initAccountData() {
 			delete ($onchainActions as any)[hash];
 		}
 		onchainActions.set($onchainActions);
+		$offchainState.actions = [];
+		$offchainState.epoch = undefined;
+		$offchainState.position = {cx: 0, cy: 0};
+		offchainState.set($offchainState);
 		emitter.emit({name: 'clear'});
 	}
 
