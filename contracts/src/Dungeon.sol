@@ -10,7 +10,7 @@ contract Dungeon is Proxied {
     // ----------------------------------------------------------------------------------------------
 
     uint256 constant TOTAL = 24 * 3600;
-    uint256 constant ACTION_epoch = 23 * 3600;
+    uint256 constant ACTION_period = 23 * 3600;
     uint256 constant START_TIMESTAMP = 0;
 
     // ----------------------------------------------------------------------------------------------
@@ -103,14 +103,14 @@ contract Dungeon is Proxied {
         for (uint256 i = 0; i < actions.length; i++) {
             Action memory action = actions[i];
             Room memory newRoom = computeRoom(roomHash(action.position));
-            if (_isValidMove(currentPosition, currentRoom, action.position, newRoom)) {
-                currentPosition = action.position;
-                currentRoom = newRoom;
-            } else {
-                // we do not continue when we encounter an invalid move
-                // for simplicity, we still count was was computed so far
-                break;
-            }
+            // if (_isValidMove(currentPosition, currentRoom, action.position, newRoom)) {
+            currentPosition = action.position;
+            currentRoom = newRoom;
+            // } else {
+            // we do not continue when we encounter an invalid move
+            // for simplicity, we still count was was computed so far
+            // break;
+            // }
         }
 
         characters[player].position = currentPosition;
@@ -135,7 +135,7 @@ contract Dungeon is Proxied {
     }
 
     function isActionepoch() public view returns (bool) {
-        return (block.timestamp - getEpoch() * TOTAL) < ACTION_epoch;
+        return (block.timestamp - getEpoch() * TOTAL) < ACTION_period;
     }
 
     function getEpochHash(uint256 epochToGenerate) public pure returns (bytes32) {
@@ -254,7 +254,7 @@ contract Dungeon is Proxied {
 
         uint256 timePassed = block.timestamp - START_TIMESTAMP;
         epoch = uint32(timePassed / epochDuration + 1);
-        commiting = timePassed - ((epoch - 1) * epochDuration) < ACTION_epoch;
+        commiting = timePassed - ((epoch - 1) * epochDuration) < ACTION_period;
     }
 
     function _isValidMove(uint256 roomPosition, Room memory room, uint256 newPosition, Room memory newRoom)
