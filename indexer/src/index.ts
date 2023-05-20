@@ -12,6 +12,7 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 		return {characters: []};
 	},
 	onStateUpdate(state, event) {
+		console.log({event, state});
 		// TODO
 		// for now the id is the player
 		// but we need to change that

@@ -117,6 +117,25 @@ describe('Dungeon', function () {
 		expect(coords.y).to.equals(expectedCoords.y)
 	});
 
+	it('18446744069414584320n roomCoords works', async function () {
+		const {users, Dungeon} = await setup();
+		const expectedCoords = bigIntIDToXY(18446744069414584320n);
+		console.log({expectedCoords});
+		const coords = (await Dungeon.callStatic.roomCoords(18446744069414584320n));
+		expect(coords.x).to.equals(expectedCoords.x)
+		expect(coords.y).to.equals(expectedCoords.y)
+	})
+
+	it('18446744069414584321n roomCoords works', async function () {
+		const {users, Dungeon} = await setup();
+		const expectedCoords = bigIntIDToXY(18446744069414584321n);
+		console.log({expectedCoords});
+		const coords = (await Dungeon.callStatic.roomCoords(18446744069414584321n));
+		expect(coords.x).to.equals(expectedCoords.x)
+		expect(coords.y).to.equals(expectedCoords.y)
+	})
+	
+
 	it('roomHash works', async function () {
 		const {users, Dungeon} = await setup();
 
