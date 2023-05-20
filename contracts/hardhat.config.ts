@@ -31,7 +31,6 @@ const config: HardhatUserConfig = {
 	},
 	namedAccounts: {
 		deployer: 0,
-		simpleERC20Beneficiary: 1,
 	},
 	networks: addForkConfiguration({
 		hardhat: {
@@ -41,29 +40,17 @@ const config: HardhatUserConfig = {
 			url: node_url('localhost'),
 			accounts: accounts(),
 		},
-		staging: {
-			url: node_url('rinkeby'),
-			accounts: accounts('rinkeby'),
-		},
-		production: {
-			url: node_url('mainnet'),
-			accounts: accounts('mainnet'),
-		},
 		mainnet: {
 			url: node_url('mainnet'),
 			accounts: accounts('mainnet'),
 		},
-		rinkeby: {
-			url: node_url('rinkeby'),
-			accounts: accounts('rinkeby'),
-		},
-		kovan: {
-			url: node_url('kovan'),
-			accounts: accounts('kovan'),
-		},
 		goerli: {
 			url: node_url('goerli'),
 			accounts: accounts('goerli'),
+		},
+		sepolia: {
+			url: node_url('sepolia'),
+			accounts: accounts('sepolia'),
 		},
 	}),
     preprocess: {
