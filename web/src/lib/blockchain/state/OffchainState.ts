@@ -30,7 +30,7 @@ export function direction(from: Position, to: Position): 0 | 1 | 2 | 3 | undefin
 		} else {
 			return undefined;
 		}
-	} else if (from.cy == from.cy) {
+	} else {
 		if (x_diff === 1) {
 			return 1;
 		} else if (x_diff === -1) {
@@ -38,8 +38,6 @@ export function direction(from: Position, to: Position): 0 | 1 | 2 | 3 | undefin
 		} else {
 			return undefined;
 		}
-	} else {
-		return undefined;
 	}
 }
 
