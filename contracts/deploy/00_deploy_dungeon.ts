@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	await deploy('Dungeon', {
 		from: deployer,
 		proxy: useProxy && 'postUpgrade',
-		args: [2],
+		args: [],
 		log: true,
 		autoMine: true, // speed up deployment on local network (ganache, hardhat), no effect on live networks
 	});

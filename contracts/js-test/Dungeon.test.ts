@@ -20,13 +20,13 @@ describe('Dungeon', function () {
 	it('epochHash works', async function () {
 		const epochToGenerate = 1;
 		const {users, Dungeon} = await setup();
-		await expect(await Dungeon.callStatic["epochHash(uint256)"](epochToGenerate)).to.equals(keccak256(encodePacked(['uint256'], [BigInt(epochToGenerate)])))
+		await expect(await Dungeon.callStatic["getEpochHash(uint256)"](epochToGenerate)).to.equals(keccak256(encodePacked(['uint256'], [BigInt(epochToGenerate)])))
 
 		const lastBlockTime = await time.latest();
 		const epoch =  Math.floor((lastBlockTime - 0) / (24 * 3600));
-		const currentEpoch = (await Dungeon.callStatic["epoch()"]()).toString();
+		const currentEpoch = (await Dungeon.callStatic["getEpoch()"]()).toString();
 		await expect(currentEpoch).to.equals(epoch.toString());
-		const currentEpochHash = await Dungeon.callStatic["epochHash()"]();
+		const currentEpochHash = await Dungeon.callStatic["getEpochHash()"]();
 		const expectedEpochHash = keccak256(encodePacked(['uint256'], [BigInt(epoch)]));
 		await expect(currentEpochHash).to.equals(expectedEpochHash)
 	});

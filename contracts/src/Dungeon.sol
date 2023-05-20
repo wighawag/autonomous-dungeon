@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.20;
 
 import "forge-deploy-proxy/ForgeDeploy_Proxied.sol";
 import "./Extraction.sol";
@@ -95,14 +95,12 @@ contract Dungeon is Proxied {
         require(commitment.epoch != 0, "NOTHING_TO_RESOLVE");
         require(commitment.epoch == epoch, "INVALID_epoch");
 
-        uint256 numActions = actions.length;
-
         _checkHash(commitment.hash, secret, actions, furtherActions);
 
         uint256 currentPosition = characters[player].position;
         Room memory currentRoom = computeRoom(roomHash(currentPosition));
 
-        for (uint256 i = 0; i < numActions; i++) {
+        for (uint256 i = 0; i < actions.length; i++) {
             Action memory action = actions[i];
             Room memory newRoom = computeRoom(roomHash(action.position));
             if (_isValidMove(currentPosition, currentRoom, action.position, newRoom)) {
