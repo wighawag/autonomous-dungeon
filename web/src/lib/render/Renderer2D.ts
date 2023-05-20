@@ -1,9 +1,10 @@
 import {writable, type Readable, type Subscriber, type Unsubscriber, type Writable} from 'svelte/store';
 import type {CameraState} from './camera';
 import type {RenderViewState} from './renderview';
-import {getRoom, getRoomFromCell, offchainState, type Room} from '$lib/blockchain/state/OffchainState';
+import {offchainState} from '$lib/blockchain/state/OffchainState';
 import {account} from '$lib/web3';
 import {Blockie} from '$lib/utils/eth/blockie';
+import type {Room} from 'jolly-roger-common';
 
 const CELL_SIZE = 50;
 const ROOM_CELL_SIZE = 3;
@@ -123,7 +124,7 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 
 		for (let y = top; y <= bottom; y++) {
 			for (let x = left; x <= right; x++) {
-				const room = getRoom(x, y);
+				const room = offchainState.dungeon.getRoom(x, y);
 
 				const cx = x * ROOM_SIZE;
 				const cy = y * ROOM_SIZE;

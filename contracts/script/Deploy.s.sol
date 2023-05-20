@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {DeployScript, Deployer} from "forge-deploy/DeployScript.sol";
-import {ProxiedDeployerFunctions, ProxyOptionsOnTag} from "generated/deployer/ProxiedDeployerFunctions.g.sol";
-import {Dungeon} from "src/Dungeon.sol";
+import {ProxiedDeployerFunctions, ProxyOptionsOnTag} from "../generated/deployer/ProxiedDeployerFunctions.g.sol";
+import {Dungeon} from "../src/Dungeon.sol";
 
 contract Deployments is DeployScript {
     using ProxiedDeployerFunctions for Deployer;

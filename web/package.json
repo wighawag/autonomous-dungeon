@@ -31,6 +31,7 @@
   "dependencies": {
     "ethereum-indexer-browser": "^0.6.3",
     "jolly-roger-indexer": "workspace:*",
+    "jolly-roger-common": "workspace:*",
     "named-logs": "^0.2.2",
     "theme-change": "^2.5.0",
     "viem": "^0.3.19",

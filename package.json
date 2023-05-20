@@ -19,6 +19,7 @@
     "contracts:deploy": "pnpm run --filter ./contracts deploy localhost ~~ forge-deploy export localhost ../indexer/src/contracts.ts,../web/src/lib/blockchain/data/contracts.ts ~~",
     "start:contracts:compile": "pnpm --filter ./contracts watch_compile",
     "start:indexer": "pnpm --filter ./indexer dev",
+    "start:common": "pnpm --filter ./common dev",
     "start:web": "pnpm --filter ./web dev",
     "format": "prettier --write . && pnpm -r format",
     "format:check": "prettier --check . && pnpm -r format:check",

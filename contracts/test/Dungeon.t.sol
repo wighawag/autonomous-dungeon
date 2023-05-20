@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {Dungeon} from "src/Dungeon.sol";
-import {Deployments} from "script/Deploy.s.sol";
+import {Dungeon} from "../src/Dungeon.sol";
+import {Deployments} from "../script/Deploy.s.sol";
 
 contract DungeonTest is Test {
     Dungeon public dungeon;

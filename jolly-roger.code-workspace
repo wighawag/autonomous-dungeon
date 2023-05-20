@@ -1,6 +1,10 @@
 {
 	"folders": [
 		{
+			"name": "common",
+			"path": "./common"
+		},
+		{
 			"name": "contracts",
 			"path": "./contracts"
 		},
@@ -24,16 +28,13 @@
 			"editor.defaultFormatter": "svelte.svelte-vscode"
 		},
 		"[solidity]": {
-			"editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
+			"editor.defaultFormatter": "JuanBlanco.solidity"
 		},
 		"solidity.formatter": "forge",
-		"npm.exclude": "**/lib/**"
+		"npm.exclude": "**/lib/**",
+		"solidity.compileUsingRemoteVersion": "v0.8.20+commit.a1b79de6"
 	},
 	"extensions": {
-		"recommendations": [
-			"svelte.svelte-vscode",
-			"esbenp.prettier-vscode",
-			"NomicFoundation.hardhat-solidity"
-		]
+		"recommendations": ["svelte.svelte-vscode", "esbenp.prettier-vscode", "JuanBlanco.solidity"]
 	}
 }
