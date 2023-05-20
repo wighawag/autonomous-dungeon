@@ -1,17 +1,8 @@
 <script lang="ts">
+	import {time} from '$lib/time';
 	import {connection} from '$lib/web3';
-	import {onMount} from 'svelte';
 	import {createTestClient, http} from 'viem';
 	import {foundry} from 'viem/chains';
-
-	let date: Date = new Date();
-	onMount(() => {
-		const interval = setInterval(() => {
-			const timestamp = connection.$state.provider?.currentTime() || Math.floor(Date.now() / 1000);
-			date = new Date(timestamp * 1000);
-		}, 1000);
-		return () => clearInterval(interval);
-	});
 
 	async function add1hour() {
 		const client = createTestClient({
@@ -20,13 +11,14 @@
 			transport: http(),
 		});
 
-		const timestamp = BigInt(Math.floor(date.getTime() / 1000));
 		await client.setNextBlockTimestamp({
-			timestamp: timestamp + 3600n,
+			timestamp: BigInt(time.now + 3600),
 		});
 		await $connection.provider?.waitNewBlock();
 		await $connection.provider?.syncTime();
 	}
+
+	$: date = new Date($time * 1000);
 </script>
 
 <label class="m-2 font-bold" for="date">Date/Time</label>

@@ -3,7 +3,10 @@ import {writable} from 'svelte/store';
 import type {EIP1193TransactionWithMetadata} from 'web3-connection';
 import {initEmitter} from '$external/callbacks';
 import type {PendingTransaction} from '$external/tx-observer';
-import type {CellAction, CellPosition} from 'jolly-roger-common';
+import {bnReplacer, bnReviver, type CellAction, type CellPosition} from 'jolly-roger-common';
+import {logs} from 'named-logs';
+
+const logger = logs('account-data');
 
 export type OnChainAction = {
 	tx: EIP1193TransactionWithMetadata;
@@ -113,12 +116,15 @@ export function initAccountData() {
 		try {
 			dataSTR = localStorage.getItem(key);
 		} catch {}
-		return dataSTR ? JSON.parse(dataSTR) : {onchainActions: {}};
+		return dataSTR
+			? JSON.parse(dataSTR, bnReviver)
+			: {onchainActions: {}, offchainState: {position: {x: 0, y: 0}, actions: []}};
 	}
 
 	async function _save(accountData: AccountData) {
 		if (key) {
-			localStorage.setItem(key, JSON.stringify(accountData));
+			logger.info(`saving account data`);
+			localStorage.setItem(key, JSON.stringify(accountData, bnReplacer));
 		}
 	}
 
@@ -147,10 +153,11 @@ export function initAccountData() {
 			action.status = pendingTransaction.status;
 			action.final = pendingTransaction.final;
 
-			// TODO specific to jolly-roger which does not need user acknowledgement for deleting the actions
-			if (action.final) {
-				delete $onchainActions[pendingTransaction.hash];
-			}
+			// for autonomous-dungeon we need to keep the secret data when commiting
+			// // TODO specific to jolly-roger which does not need user acknowledgement for deleting the actions
+			// if (action.final) {
+			// 	delete $onchainActions[pendingTransaction.hash];
+			// }
 		}
 	}
 

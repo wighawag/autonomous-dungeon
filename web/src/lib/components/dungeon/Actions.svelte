@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {controller} from '$lib/blockchain/state/Controller';
+	import {controller, phase} from '$lib/blockchain/state/Controller';
 	import {accountData} from '$lib/web3';
 	import {contracts} from '$lib/web3/viem';
 	import {fromCellActionsToRoomActions, xyToBigIntID} from 'jolly-roger-common';
@@ -58,6 +58,7 @@
 		class={`fixed top-20 right-0 card w-96 ${actionsLeft <= 0 ? 'bg-red-500' : 'bg-neutral'} text-neutral-content m-1`}
 	>
 		<div class="card-body items-center text-center">
+			<p>{$phase.timeLeftToCommit} seconds left</p>
 			<h2 class="card-title">Ready to Commit?</h2>
 			<p>You have {actionsLeft} actions left</p>
 			<div class="card-actions justify-end">

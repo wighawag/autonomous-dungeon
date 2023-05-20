@@ -2,12 +2,15 @@ import {logs} from 'named-logs';
 import {type CellPosition, type CellAction, generateEpoch, cellPositionFrom} from 'jolly-roger-common';
 import {encodePacked, keccak256} from 'viem';
 import {accountData} from '$lib/web3';
+import {derived, writable} from 'svelte/store';
+import {time} from '$lib/time';
 
 const logger = logs('controller');
 
 const TOTAL = 24 * 3600;
 const ACTION_PERIOD = 23 * 3600;
 const START_TIMESTAMP = 0;
+
 export function initController() {
 	const max = 64;
 
@@ -80,3 +83,21 @@ export function initController() {
 }
 
 export const controller = initController();
+
+export const phase = derived(time, ($time) => {
+	const epoch = Math.floor(($time - START_TIMESTAMP) / TOTAL);
+	const epochStartTime = epoch * TOTAL;
+	const timePassed = $time - epochStartTime;
+	const isActionPhase = timePassed < ACTION_PERIOD;
+	const timeLeftToCommit = ACTION_PERIOD - timePassed;
+	const timeLeftToReveal = isActionPhase ? -1 : TOTAL - timePassed;
+	const timeLeftToEpochEnd = TOTAL - timePassed;
+
+	return {
+		comitting: isActionPhase,
+		epoch,
+		timeLeftToReveal,
+		timeLeftToCommit,
+		timeLeftToEpochEnd,
+	};
+});
