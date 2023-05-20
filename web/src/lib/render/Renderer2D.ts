@@ -5,6 +5,7 @@ import {account, accountData} from '$lib/web3';
 import {Blockie} from '$lib/utils/eth/blockie';
 import type {Room} from 'jolly-roger-common';
 import {controller} from '$lib/blockchain/state/Controller';
+import {state} from '$lib/blockchain/state/State';
 
 const CELL_SIZE = 50;
 const ROOM_CELL_SIZE = 3;
@@ -81,6 +82,7 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 			width: this.canvas.width,
 			height: this.canvas.height,
 		});
+		// state.subscribe(() => {});
 	}
 
 	render(time: number) {
@@ -188,6 +190,13 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 				actionRoom.y * ROOM_SIZE + positionInRoom.y * CELL_SIZE
 			);
 			ctx.globalAlpha = 1;
+		}
+
+		// console.log({characters: state.$state.characters});
+		for (const character of state.$state.characters) {
+			const cx = character.position.x * ROOM_SIZE - CELL_SIZE / 2;
+			const cy = character.position.y * ROOM_SIZE - CELL_SIZE / 2;
+			Blockie.get(character.id).draw(ctx, cx, cy, 8);
 		}
 
 		if (account.$state.address) {

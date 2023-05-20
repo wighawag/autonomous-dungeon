@@ -5,6 +5,7 @@
 	import {contracts} from '$lib/web3/viem';
 	import {fromCellActionsToRoomActions, xyToBigIntID, type RoomAction} from 'jolly-roger-common';
 	import {encodeAbiParameters, keccak256} from 'viem';
+	import {state} from '$lib/blockchain/state/State';
 
 	const offchainState = accountData.offchainState;
 
@@ -92,10 +93,11 @@
 	$: actionsLeft = controller.max - $offchainState.actions.length;
 </script>
 
-{#if $offchainState.actions.length > 0}
-	<div
-		class={`fixed top-20 right-0 card w-96 ${actionsLeft <= 0 ? 'bg-red-500' : 'bg-neutral'} text-neutral-content m-1`}
-	>
+<div
+	class={`fixed top-20 right-0 card w-96 ${actionsLeft <= 0 ? 'bg-red-500' : 'bg-neutral'} text-neutral-content m-1`}
+>
+	<!-- {$state.characters.length} characters -->
+	{#if $offchainState.actions.length > 0}
 		<div class="card-body items-center text-center">
 			{#if $phase.comitting}
 				<p>{$phase.timeLeftToCommit} seconds left</p>
@@ -113,5 +115,5 @@
 				</div>
 			{/if}
 		</div>
-	</div>
-{/if}
+	{/if}
+</div>

@@ -127,8 +127,8 @@ importers:
   web:
     dependencies:
       ethereum-indexer-browser:
-        specifier: ^0.6.3
-        version: 0.6.3(typescript@5.0.4)
+        specifier: ^0.6.5
+        version: 0.6.5(typescript@5.0.4)
       jolly-roger-common:
         specifier: workspace:*
         version: link:../common
@@ -2863,10 +2863,10 @@ packages:
       '@scure/bip39': 1.1.1
     dev: true
 
-  /ethereum-indexer-browser@0.6.3(typescript@5.0.4):
-    resolution: {integrity: sha512-9xu3vMQgse9+RNjQrJ+q1fUAeOQE03EDZOw8jGtu6cTgmosrTeEcWS0kok41E1kEkTb1F1aiT7hfxfLQ8JTNhg==}
+  /ethereum-indexer-browser@0.6.5(typescript@5.0.4):
+    resolution: {integrity: sha512-U9TMFEBvXJaK6lht3/eCW7diLUpyeoWifiJiBb/g+qKPDCZmk2ceAgatnfdbLXoVzMqEVf5KpXR7AymAX3BjtA==}
     dependencies:
-      ethereum-indexer: 0.6.3(typescript@5.0.4)
+      ethereum-indexer: 0.6.4(typescript@5.0.4)
       idb-keyval: 6.2.1
       named-logs: 0.2.2
       sveltore: 0.0.2
@@ -2962,6 +2962,18 @@ packages:
       - typescript
       - utf-8-validate
       - zod
+
+  /ethereum-indexer@0.6.4(typescript@5.0.4):
+    resolution: {integrity: sha512-KR7ArzFs8e1CP0pfTCJ57GQezTtN8sPL+LP6D+d5l9HW7KyW+C1sox6bZ0oT8oXthrvMeC5ug2NtMwz8V2Bw4Q==}
+    dependencies:
+      named-logs: 0.2.2
+      viem: 0.1.26(typescript@5.0.4)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
+    dev: false
 
   /ethereumjs-abi@0.6.8:
     resolution: {integrity: sha512-Tx0r/iXI6r+lRsdvkFDlut0N08jWMnKRZ6Gkq+Nmw75lZe4e6o3EkSnkaBP5NF6+m5PTGAr9JP43N3LyeoglsA==}
