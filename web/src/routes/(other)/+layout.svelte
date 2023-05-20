@@ -10,7 +10,6 @@
 				{pathname: '/', title: 'Home'},
 				{pathname: '/demo/', title: 'Demo'},
 				{pathname: '/debug/', title: 'Debug'},
-				{pathname: '/about/', title: 'About'},
 			]}
 		/>
 	</div>

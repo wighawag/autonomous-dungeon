@@ -33,6 +33,9 @@ const stores = init({
 	},
 	defaultRPC,
 	networks: initialContractsInfos,
+	provider: {
+		errorOnTimeDifference: false,
+	},
 	observers: {
 		onTxSent(tx, hash) {
 			accountData.onTxSent(tx, hash as `0x{string}`); // TODO web3-connection 0x{string}
