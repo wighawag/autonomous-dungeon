@@ -3,14 +3,13 @@ pragma solidity ^0.8.13;
 
 import {DeployScript, Deployer} from "forge-deploy/DeployScript.sol";
 import {ProxiedDeployerFunctions, ProxyOptionsOnTag} from "generated/deployer/ProxiedDeployerFunctions.g.sol";
-import {GreetingsRegistry} from "src/GreetingsRegistry.sol";
+import {Dungeon} from "src/Dungeon.sol";
 
 contract Deployments is DeployScript {
     using ProxiedDeployerFunctions for Deployer;
 
-    function deploy() external returns (GreetingsRegistry) {
-        return deployer.deploy_GreetingsRegistry(
-            "Registry", "", ProxyOptionsOnTag({onTag: "testnet", owner: vm.envAddress("DEPLOYER")})
-        );
+    function deploy() external returns (Dungeon) {
+        return
+            deployer.deploy_Dungeon("Dungeon", ProxyOptionsOnTag({onTag: "testnet", owner: vm.envAddress("DEPLOYER")}));
     }
 }
