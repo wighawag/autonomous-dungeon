@@ -11,7 +11,7 @@ contract Dungeon is Proxied {
 
     uint256 constant TOTAL = 24 * 3600;
     uint256 constant ACTION_epoch = 23 * 3600;
-    uint256 constant START_TIMESTAMP = 0; 
+    uint256 constant START_TIMESTAMP = 0;
 
     // ----------------------------------------------------------------------------------------------
     // EVENTS
@@ -114,7 +114,7 @@ contract Dungeon is Proxied {
         }
 
         characters[player].position = currentPosition;
-       
+
         bytes24 hashResolved = commitment.hash;
         if (furtherActions != bytes24(0)) {
             commitment.hash = furtherActions;
@@ -130,10 +130,12 @@ contract Dungeon is Proxied {
         emit StateUpdate(player, currentPosition, characters[player].life);
     }
 
-
-    function acknowledgeMissedResolution(address player, bytes32 secret, Action[] calldata actions, bytes24 furtherActions)
-        external
-    {
+    function acknowledgeMissedResolution(
+        address player,
+        bytes32 secret,
+        Action[] calldata actions,
+        bytes24 furtherActions
+    ) external {
         Commitment storage commitment = commitments[player];
         (uint32 epoch,) = _epoch();
         require(commitment.epoch > 0 && commitment.epoch != epoch, "NO_NEED");
@@ -175,7 +177,7 @@ contract Dungeon is Proxied {
     }
 
     function roomCoords(uint256 id) public pure returns (int32 x, int32 y) {
-        x = int32(int256(uint256(uint32(id))) - 2**31);
+        x = int32(int256(uint256(uint32(id))) - 2 ** 31);
         y = int32(int256(id >> 32) - 2 ** 31);
     }
 
@@ -186,36 +188,36 @@ contract Dungeon is Proxied {
     function roomHash(uint256 id) public view returns (bytes32) {
         return keccak256(abi.encodePacked(getEpochHash(), id));
     }
-    
+
     function computeRoom(bytes32 roomHashData) public pure returns (Room memory) {
         // // take from the first 0 (right side) and take 2 bits to give you a number between [0,2**2[
-		// const firstExit = value(roomHashData, 0, 2);
+        // const firstExit = value(roomHashData, 0, 2);
         uint8 firstExit = uint8(Extraction.value(roomHashData, 0, 2));
 
-		// const hasSecondExit = value(roomHashData, 2, 5) < 3; // take 32 values [0,2**5[
+        // const hasSecondExit = value(roomHashData, 2, 5) < 3; // take 32 values [0,2**5[
         bool hasSecondExit = uint8(Extraction.value(roomHashData, 2, 5)) < 3;
-		// const secondExitRaw = value(roomHashData, 7, 2); // this has one value too much.
+        // const secondExitRaw = value(roomHashData, 7, 2); // this has one value too much.
         uint8 secondExitRaw = uint8(Extraction.value(roomHashData, 7, 2));
-		// const secondExit = hasSecondExit && secondExitRaw < 3 ? secondExitRaw : 4;
+        // const secondExit = hasSecondExit && secondExitRaw < 3 ? secondExitRaw : 4;
         uint8 secondExit = (hasSecondExit && secondExitRaw < 3) ? secondExitRaw : 4;
-		// // const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
-		// // const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
+        // // const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
+        // // const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 
-		// const chest = value(roomHashData, 9, 10) < 7; // take 1024 values [0,2**10[
+        // const chest = value(roomHashData, 9, 10) < 7; // take 1024 values [0,2**10[
         bool chest = Extraction.value(roomHashData, 9, 10) < 7;
 
-		// const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
+        // const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
         uint8 monsterRaw = uint8(Extraction.value(roomHashData, 19, 7));
-		// const monster = chest ? monsterRaw < 30 : monsterRaw < 1;
+        // const monster = chest ? monsterRaw < 30 : monsterRaw < 1;
         bool monster = chest ? monsterRaw < 30 : monsterRaw < 1;
 
         return Room({
             exits: [
-				firstExit == 0 || secondExit == 0,
-				firstExit == 1 || secondExit == 1,
-				firstExit == 2 || secondExit == 2,
-				firstExit == 3 || secondExit == 3
-			],
+                firstExit == 0 || secondExit == 0,
+                firstExit == 1 || secondExit == 1,
+                firstExit == 2 || secondExit == 2,
+                firstExit == 3 || secondExit == 3
+            ],
             chest: chest,
             monster: monster
         });
@@ -236,23 +238,22 @@ contract Dungeon is Proxied {
         commitment.hash = commitmentHash;
         commitment.epoch = epoch;
 
+        // Note: A player can change its commitment at any time until the commit phase ends.
         emit CommitmentMade(player, epoch, commitmentHash);
     }
 
-    function _checkHash(
-		bytes24 commitmentHash,
-		bytes32 secret,
-		Action[] memory actions,
-		bytes24 furtherActions
-	) internal pure {
-		if (furtherActions != bytes24(0)) {
-			bytes24 computedHash = bytes24(keccak256(abi.encode(secret, actions, furtherActions)));
-			require(commitmentHash == computedHash, "HASH_NOT_MATCHING");
-		} else {
-			bytes24 computedHash = bytes24(keccak256(abi.encode(secret, actions)));
-			require(commitmentHash == computedHash, "HASH_NOT_MATCHING");
-		}
-	}
+    function _checkHash(bytes24 commitmentHash, bytes32 secret, Action[] memory actions, bytes24 furtherActions)
+        internal
+        pure
+    {
+        if (furtherActions != bytes24(0)) {
+            bytes24 computedHash = bytes24(keccak256(abi.encode(secret, actions, furtherActions)));
+            require(commitmentHash == computedHash, "HASH_NOT_MATCHING");
+        } else {
+            bytes24 computedHash = bytes24(keccak256(abi.encode(secret, actions)));
+            require(commitmentHash == computedHash, "HASH_NOT_MATCHING");
+        }
+    }
 
     function _epoch() internal view virtual returns (uint32 epoch, bool commiting) {
         uint256 epochDuration = TOTAL;
@@ -265,16 +266,19 @@ contract Dungeon is Proxied {
         commiting = timePassed - ((epoch - 1) * epochDuration) < ACTION_epoch;
     }
 
-    function _isValidMove(uint256 roomPosition, Room memory room, uint256 newPosition, Room memory newRoom) internal pure returns (bool) {
+    function _isValidMove(uint256 roomPosition, Room memory room, uint256 newPosition, Room memory newRoom)
+        internal
+        pure
+        returns (bool)
+    {
         (int32 x, int32 y) = roomCoords(roomPosition);
         (int32 nx, int32 ny) = roomCoords(newPosition);
-        uint8 direction = _direction(x,y, nx, ny);
+        uint8 direction = _direction(x, y, nx, ny);
         if (direction == 4) {
             return false;
         }
         return room.exits[direction] || newRoom.exits[direction + 2 % 4];
     }
-
 
     function _direction(int32 fromx, int32 fromy, int32 tox, int32 toy) internal pure returns (uint8) {
         int64 x_diff = int64(tox) - fromx;
