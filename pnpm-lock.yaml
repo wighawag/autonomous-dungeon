@@ -17,8 +17,8 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
       viem:
-        specifier: ^0.3.19
-        version: 0.3.19(typescript@5.0.4)
+        specifier: ^0.3.31
+        version: 0.3.31(typescript@5.0.4)
     devDependencies:
       ldenv:
         specifier: ^0.3.5
@@ -87,8 +87,8 @@ importers:
         specifier: ^5.0.4
         version: 5.0.4
       viem:
-        specifier: ^0.3.19
-        version: 0.3.19(typescript@5.0.4)
+        specifier: ^0.3.31
+        version: 0.3.31(typescript@5.0.4)
 
   indexer:
     dependencies:
@@ -139,11 +139,11 @@ importers:
         specifier: ^2.5.0
         version: 2.5.0
       viem:
-        specifier: ^0.3.19
-        version: 0.3.19(typescript@5.0.4)
+        specifier: ^0.3.31
+        version: 0.3.31(typescript@5.0.4)
       web3-connection:
-        specifier: ^0.0.18
-        version: 0.0.18(svelte@3.59.1)
+        specifier: ^0.0.19
+        version: 0.0.19(svelte@3.59.1)
       web3w-walletconnect-loader:
         specifier: ^0.4.3
         version: 0.4.3
@@ -6924,8 +6924,8 @@ packages:
       - utf-8-validate
       - zod
 
-  /viem@0.3.19(typescript@5.0.4):
-    resolution: {integrity: sha512-7OlSgiB7e+OFz9OqTOZ/Mpx8GAAVKCxsaPDJRuR8QtixlruUHPfHBHOemkX+O/Drn6B7l04iCUZjCvSB8OtVKg==}
+  /viem@0.3.31(typescript@5.0.4):
+    resolution: {integrity: sha512-4B7oUQkYCGmnd/W+T/miFudx/pZ3V3mRdv3nl1tPy60W5Zlt2lIH+XN9Q0pkHe+5n2Eto/aFZYwRdqGsj6MHmA==}
     dependencies:
       '@adraffy/ens-normalize': 1.9.0
       '@noble/curves': 1.0.0
@@ -7013,8 +7013,8 @@ packages:
     engines: {node: '>= 8'}
     dev: true
 
-  /web3-connection@0.0.18(svelte@3.59.1):
-    resolution: {integrity: sha512-bOluIOXgO7aco667HIMgGQqbXr2wCTcI3LzvqWIznHtvlBdmFI/QO6xOsFTmY2ljQgXu8mX183baO990FSC0+g==}
+  /web3-connection@0.0.19(svelte@3.59.1):
+    resolution: {integrity: sha512-llG34JP8oi1FTmMKilJ3eJxVZwm3aEItSKaDd5nxu3Pn99FCTrTOmOfRuYL76NgqHbh6ntq7ctzJY+8tR/B/3w==}
     peerDependencies:
       svelte: ^3.54.0
     dependencies:

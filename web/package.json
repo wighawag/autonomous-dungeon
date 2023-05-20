@@ -30,12 +30,12 @@
   },
   "dependencies": {
     "ethereum-indexer-browser": "^0.6.3",
-    "jolly-roger-indexer": "workspace:*",
     "jolly-roger-common": "workspace:*",
+    "jolly-roger-indexer": "workspace:*",
     "named-logs": "^0.2.2",
     "theme-change": "^2.5.0",
-    "viem": "^0.3.19",
-    "web3-connection": "^0.0.18",
+    "viem": "^0.3.31",
+    "web3-connection": "^0.0.19",
     "web3w-walletconnect-loader": "^0.4.3"
   },
   "scripts": {

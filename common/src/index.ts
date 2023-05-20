@@ -66,6 +66,34 @@ export function roomDirection(from: RoomPosition, to: RoomPosition): 0 | 1 | 2 |
 	}
 }
 
+export function getRoomPositionFromCell(x: number, y: number): RoomPosition {
+	return {
+		x: Math.floor((x + 1) / 3),
+		y: Math.floor((y + 1) / 3),
+	};
+}
+
+export function fromCellActionsToRoomActions(cellActions: CellAction[]): RoomAction[] {
+	const roomActions: RoomAction[] = [];
+	for (const cellAction of cellActions) {
+		if (cellAction.type === 'move') {
+			const fromRoom = getRoomPositionFromCell(cellAction.from.cx, cellAction.from.cy);
+			const toRoom = getRoomPositionFromCell(cellAction.to.cx, cellAction.to.cy);
+			if (fromRoom.x != toRoom.x || fromRoom.y != toRoom.y) {
+				roomActions.push({
+					from: fromRoom,
+					to: toRoom,
+					type: 'move',
+				});
+			}
+		} else {
+			throw new Error(`CellAction type ${cellAction.type} is not supported`);
+		}
+	}
+
+	return roomActions;
+}
+
 export type RawRoom = {
 	// north, east, west, south
 	exits: [boolean, boolean, boolean, boolean];
@@ -185,7 +213,8 @@ export function generateEpoch(epochHash: `0x${string}`) {
 	}
 
 	function getRoomFromCell(x: number, y: number): Room {
-		return getRoom(Math.floor((x + 1) / 3), Math.floor((y + 1) / 3));
+		const roomPosition = getRoomPositionFromCell(x, y);
+		return getRoom(roomPosition.x, roomPosition.y);
 	}
 
 	function isValidCellMove(from: CellPosition, to: CellPosition) {

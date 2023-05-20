@@ -24,7 +24,7 @@
     "ldenv": "^0.3.5",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4",
-    "viem": "^0.3.19"
+    "viem": "^0.3.31"
   },
   "scripts": {
     "prepare": "forge install --no-git foundry-rs/forge-std@v1.5.3 || echo ''",

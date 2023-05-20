@@ -2,6 +2,8 @@
 	import {controller} from '$lib/blockchain/state/Controller';
 	import {accountData} from '$lib/web3';
 	import {contracts} from '$lib/web3/viem';
+	import {fromCellActionsToRoomActions, xyToBigIntID} from 'jolly-roger-common';
+	import {encodeAbiParameters, keccak256} from 'viem';
 
 	const offchainState = accountData.offchainState;
 
@@ -11,13 +13,39 @@
 
 	function commit() {
 		contracts.execute(async ({contracts, connection}) => {
-			const actions = accountData.$offchainState.actions;
+			const cellActions = accountData.$offchainState.actions;
+			const roomActions = fromCellActionsToRoomActions(cellActions);
+			const actions = roomActions.map((v) => ({
+				position: xyToBigIntID(v.to.x, v.to.y),
+			}));
+			// TODO random
+			const secret = '0x0000000000000000000000000000000000000000000000000000000000000000';
+			const commitmentHash = keccak256(
+				encodeAbiParameters(
+					[
+						{type: 'bytes32', name: 'secret'},
+						{
+							type: 'tuple[]',
+							components: [
+								{
+									name: 'position',
+									type: 'uint64',
+								},
+							],
+						},
+					],
+					[secret, actions]
+				)
+			).slice(0, 50) as `0x${string}`;
+
 			connection.provider.setNextMetadata({
-				actions: actions,
+				actions,
+				cellActions,
+				secret,
 			});
 			contracts.Dungeon.write({
 				functionName: 'makeCommitment',
-				args: ['0x'], // TODO
+				args: [commitmentHash],
 			});
 		});
 	}
