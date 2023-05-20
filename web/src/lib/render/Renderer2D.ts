@@ -1,10 +1,10 @@
 import {writable, type Readable, type Subscriber, type Unsubscriber, type Writable} from 'svelte/store';
 import type {CameraState} from './camera';
 import type {RenderViewState} from './renderview';
-import {offchainState} from '$lib/blockchain/state/OffchainState';
-import {account} from '$lib/web3';
+import {account, accountData} from '$lib/web3';
 import {Blockie} from '$lib/utils/eth/blockie';
 import type {Room} from 'jolly-roger-common';
+import {controller} from '$lib/blockchain/state/Controller';
 
 const CELL_SIZE = 50;
 const ROOM_CELL_SIZE = 3;
@@ -124,7 +124,7 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 
 		for (let y = top; y <= bottom; y++) {
 			for (let x = left; x <= right; x++) {
-				const room = offchainState.dungeon.getRoom(x, y);
+				const room = controller.dungeon.getRoom(x, y);
 
 				const cx = x * ROOM_SIZE;
 				const cy = y * ROOM_SIZE;
@@ -149,10 +149,11 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 			}
 		}
 
-		const character = offchainState.$state.position;
+		const $state = accountData.$offchainState;
+		const character = $state.position;
 		const characterRoom = {
-			x: Math.floor((offchainState.$state.position.cx + 1) / 3),
-			y: Math.floor((offchainState.$state.position.cy + 1) / 3),
+			x: Math.floor(($state.position.cx + 1) / 3),
+			y: Math.floor(($state.position.cy + 1) / 3),
 		};
 		ctx.fillStyle = 'white';
 		ctx.strokeStyle = 'white';
@@ -167,11 +168,11 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 			}
 		}
 		const characterRoomPosition = {
-			x: offchainState.$state.position.cx - characterRoom.x * 3,
-			y: offchainState.$state.position.cy - characterRoom.y * 3,
+			x: $state.position.cx - characterRoom.x * 3,
+			y: $state.position.cy - characterRoom.y * 3,
 		};
 
-		for (const action of offchainState.$state.actions) {
+		for (const action of $state.actions) {
 			const actionRoom = {
 				x: Math.floor((action.from.cx + 1) / 3),
 				y: Math.floor((action.from.cy + 1) / 3),

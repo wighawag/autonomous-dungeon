@@ -181,3 +181,10 @@ export function generateEpoch(epochHash: `0x${string}`) {
 		isValidMove,
 	};
 }
+
+export function positionFrom(position: Position, x: 0 | -1 | 1, y: 0 | -1 | 1) {
+	return {
+		cx: position.cx + x,
+		cy: position.cy + y,
+	};
+}

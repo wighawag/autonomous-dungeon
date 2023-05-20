@@ -1,21 +1,24 @@
 <script lang="ts">
-	import {offchainState} from '$lib/blockchain/state/OffchainState';
+	import {controller} from '$lib/blockchain/state/Controller';
+	import {accountData} from '$lib/web3';
 	import {contracts} from '$lib/web3/viem';
 
+	const offchainState = accountData.offchainState;
+
 	function reset() {
-		offchainState.reset();
+		controller.reset();
 	}
 
 	function commit() {
 		contracts.execute(async ({contracts}) => {
-			contracts.Registry.write({
-				functionName: 'setMessage',
-				args: ['dsdwsa', 1],
+			contracts.Dungeon.write({
+				functionName: 'makeCommitment',
+				args: ['0x'], // TODO
 			});
 		});
 	}
 
-	$: actionsLeft = offchainState.max - $offchainState.actions.length;
+	$: actionsLeft = controller.max - $offchainState.actions.length;
 </script>
 
 {#if $offchainState.actions.length > 0}

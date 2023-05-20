@@ -3,6 +3,7 @@ import {writable} from 'svelte/store';
 import type {EIP1193TransactionWithMetadata} from 'web3-connection';
 import {initEmitter} from '$external/callbacks';
 import type {PendingTransaction} from '$external/tx-observer';
+import type {Action, Position} from 'jolly-roger-common';
 
 export type OnChainAction = {
 	tx: EIP1193TransactionWithMetadata;
@@ -19,9 +20,19 @@ export type OnChainAction = {
 	  }
 );
 
+export type Epoch = {hash: string};
 export type OnChainActions = {[hash: `0x${string}`]: OnChainAction};
 
-export type AccountData = {onchainActions: OnChainActions};
+export type OffchainState = {
+	epoch?: Epoch;
+	position: Position;
+	actions: Action[];
+};
+
+export type AccountData = {
+	onchainActions: OnChainActions;
+	offchainState: OffchainState;
+};
 
 function fromOnChainActionToPendingTransaction(hash: `0x${string}`, onchainAction: OnChainAction): PendingTransaction {
 	return {
@@ -39,17 +50,38 @@ export function initAccountData() {
 	const $onchainActions: OnChainActions = {};
 	const onchainActions = writable<OnChainActions>($onchainActions);
 
+	const $offchainState: OffchainState = {
+		position: {cx: 0, cy: 0},
+		actions: [],
+	};
+	const offchainState = writable<OffchainState>($offchainState);
+
 	let key: string | undefined;
 	async function load(address: `0x${string}`, chainId: string, genesisHash?: string) {
 		const data = await _load(address, chainId, genesisHash);
-		const pending_transactions: PendingTransaction[] = [];
+
+		if (data.offchainState) {
+			$offchainState.actions = data.offchainState.actions;
+			$offchainState.position = data.offchainState.position;
+			$offchainState.epoch = data.offchainState.epoch;
+			offchainState.set($offchainState);
+		}
+
 		for (const hash in data.onchainActions) {
 			const onchainAction = (data.onchainActions as any)[hash];
 			($onchainActions as any)[hash] = onchainAction;
+		}
+		onchainActions.set($onchainActions);
+		handleTxs($onchainActions);
+	}
+
+	function handleTxs(onChainActions: OnChainActions) {
+		const pending_transactions: PendingTransaction[] = [];
+		for (const hash in onChainActions) {
+			const onchainAction = (onChainActions as any)[hash];
 			pending_transactions.push(fromOnChainActionToPendingTransaction(hash as `0x${string}`, onchainAction));
 		}
 		emitter.emit({name: 'newTx', txs: pending_transactions});
-		onchainActions.set($onchainActions);
 	}
 
 	async function unload() {
@@ -65,7 +97,10 @@ export function initAccountData() {
 	}
 
 	async function save() {
-		_save({onchainActions: $onchainActions});
+		_save({
+			onchainActions: $onchainActions,
+			offchainState: $offchainState,
+		});
 	}
 
 	async function _load(address: `0x${string}`, chainId: string, genesisHash?: string): Promise<AccountData> {
@@ -91,11 +126,8 @@ export function initAccountData() {
 			status: undefined,
 		};
 
-		if (key) {
-			// TODO optimize this ? currently write on every add, use dedupe
-			localStorage.setItem(key, JSON.stringify({actions: $onchainActions}));
-		}
 		$onchainActions[hash] = onchainAction;
+		save();
 		onchainActions.set($onchainActions);
 
 		emitter.emit({
@@ -140,10 +172,59 @@ export function initAccountData() {
 		}
 	}
 
+	function resetOffchainState(alsoSave: boolean = true) {
+		const firstAction = $offchainState.actions[0];
+		$offchainState.actions.splice(0, $offchainState.actions.length);
+		if (firstAction) {
+			$offchainState.position.cx = firstAction.from.cx;
+			$offchainState.position.cy = firstAction.from.cy;
+		} else {
+			$offchainState.position.cx = 0;
+			$offchainState.position.cy = 0;
+		}
+
+		$offchainState.epoch = undefined;
+		if (alsoSave) {
+			save();
+		}
+		offchainState.set($offchainState);
+	}
+
+	function move(epoch: Epoch, to: Position) {
+		if ($offchainState.epoch && epoch.hash !== $offchainState.epoch.hash) {
+			resetOffchainState(false);
+			$offchainState.epoch = epoch;
+		}
+		$offchainState.actions.push({type: 'move', to, from: {...$offchainState.position}});
+		$offchainState.position.cx = to.cx;
+		$offchainState.position.cy = to.cy;
+		save();
+		offchainState.set($offchainState);
+	}
+
+	function back() {
+		if ($offchainState.actions.length > 0) {
+			$offchainState.position.cx = $offchainState.actions[$offchainState.actions.length - 1].from.cx;
+			$offchainState.position.cy = $offchainState.actions[$offchainState.actions.length - 1].from.cy;
+		}
+		$offchainState.actions.splice($offchainState.actions.length - 1, 1);
+		save();
+		offchainState.set($offchainState);
+	}
+
 	return {
 		onchainActions: {
 			subscribe: onchainActions.subscribe,
 		},
+
+		offchainState: {
+			subscribe: offchainState.subscribe,
+			move,
+			back,
+			reset: resetOffchainState,
+		},
+
+		$offchainState,
 
 		load,
 		unload,
