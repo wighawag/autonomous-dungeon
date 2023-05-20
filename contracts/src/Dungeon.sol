@@ -147,13 +147,16 @@ contract Dungeon is Proxied {
     }
 
     function roomID(int32 x, int32 y) public pure returns (uint256) {
-        //  BigInt(x) + 2n ** 31n + ((BigInt(y) + 2n ** 31n) << 32n);
-        return uint256(int256(x) + 2 ** 31) + (uint256(int256(y) + 2 ** 31) << 32);
+        unchecked {
+            return uint256(uint256(uint64(uint32(y)) << 32) + uint32(x));
+        }
     }
 
     function roomCoords(uint256 id) public pure returns (int32 x, int32 y) {
-        x = int32(int256(uint256(uint32(id))) - 2 ** 31);
-        y = int32(int256(id >> 32) - 2 ** 31);
+        unchecked {
+            x = int32(int256(id & 0xFFFFFFFF));
+            y = int32(int256(id >> 32));
+        }
     }
 
     function roomHash(int32 x, int32 y) public view returns (bytes32) {

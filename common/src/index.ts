@@ -117,8 +117,8 @@ export function bigIntIDToXYID(position: bigint): string {
 // const bn32 = BigInt('0x10000000000000000');
 export function bigIntIDToXY(position: bigint): RoomPosition {
 	const bn = BigInt(position);
-	const x = Number(BigInt.asUintN(32, bn) - 2n ** 31n);
-	const y = Number((bn >> 32n) - 2n ** 31n);
+	const x = Number(BigInt.asIntN(32, bn));
+	const y = Number(BigInt.asIntN(32, bn >> 32n));
 	// const rx = x >= leftMostBit ? -(bn32 - x) : x;
 	// const ry = y >= leftMostBit ? -(bn32 - y) : y;
 	return {x, y};
@@ -129,9 +129,7 @@ export function xyToXYID(x: number, y: number) {
 }
 
 export function xyToBigIntID(x: number, y: number): bigint {
-	// we add half the range to avoid dealing with negative
-	// TODO improve thta handling
-	const bn = BigInt(x) + 2n ** 31n + ((BigInt(y) + 2n ** 31n) << 32n);
+	const bn = BigInt.asUintN(32, BigInt(x)) + (BigInt.asUintN(32, BigInt(y)) << 32n);
 	return bn;
 }
 
