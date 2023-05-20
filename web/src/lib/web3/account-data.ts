@@ -3,13 +3,33 @@ import {writable} from 'svelte/store';
 import type {EIP1193TransactionWithMetadata} from 'web3-connection';
 import {initEmitter} from '$external/callbacks';
 import type {PendingTransaction} from '$external/tx-observer';
-import {bnReplacer, bnReviver, type CellAction, type CellPosition} from 'jolly-roger-common';
+import {bnReplacer, bnReviver, type CellAction, type CellPosition, type RoomAction} from 'jolly-roger-common';
 import {logs} from 'named-logs';
 
 const logger = logs('account-data');
 
+export type CommitAction = {
+	position: bigint;
+};
+
+export type CommitMetadata = {
+	type: 'commit' | undefined; // TODO remove undefined
+	cellActions: CellAction[];
+	actions: CommitAction[];
+	secret: `0x${string}`;
+};
+
+export type RevealMetadata = {
+	type: 'reveal';
+	commitTx: `0x${string}`;
+};
+
+export type DungeonTransaction = EIP1193TransactionWithMetadata & {
+	metadata: CommitMetadata | RevealMetadata;
+};
+
 export type OnChainAction = {
-	tx: EIP1193TransactionWithMetadata;
+	tx: DungeonTransaction;
 } & (
 	| {
 			inclusion: 'BeingFetched' | 'Broadcasted' | 'NotFound' | 'Cancelled';
@@ -32,10 +52,17 @@ export type OffchainState = {
 	actions: CellAction[];
 };
 
+const defaultOffchainState: OffchainState = {
+	position: {cx: 0, cy: 0},
+	actions: [],
+};
+
 export type AccountData = {
 	onchainActions: OnChainActions;
 	offchainState: OffchainState;
 };
+
+const emptyAccountData: AccountData = {onchainActions: {}, offchainState: defaultOffchainState};
 
 function fromOnChainActionToPendingTransaction(hash: `0x${string}`, onchainAction: OnChainAction): PendingTransaction {
 	return {
@@ -53,10 +80,7 @@ export function initAccountData() {
 	const $onchainActions: OnChainActions = {};
 	const onchainActions = writable<OnChainActions>($onchainActions);
 
-	const $offchainState: OffchainState = {
-		position: {cx: 0, cy: 0},
-		actions: [],
-	};
+	const $offchainState: OffchainState = defaultOffchainState;
 	const offchainState = writable<OffchainState>($offchainState);
 
 	let key: string | undefined;
@@ -116,9 +140,8 @@ export function initAccountData() {
 		try {
 			dataSTR = localStorage.getItem(key);
 		} catch {}
-		return dataSTR
-			? JSON.parse(dataSTR, bnReviver)
-			: {onchainActions: {}, offchainState: {position: {x: 0, y: 0}, actions: []}};
+		const data: AccountData = dataSTR ? JSON.parse(dataSTR, bnReviver) : emptyAccountData;
+		return data;
 	}
 
 	async function _save(accountData: AccountData) {
@@ -129,8 +152,18 @@ export function initAccountData() {
 	}
 
 	function addAction(tx: EIP1193TransactionWithMetadata, hash: `0x${string}`, inclusion?: 'Broadcasted') {
+		if (!tx.metadata) {
+			console.error(`no metadata on the tx, we still save it, but this will not let us know what this tx is about`);
+		} else if (typeof tx.metadata !== 'object') {
+			console.error(`metadata is not an object and so do not conform to DungeonTransaction`);
+		} else {
+			if (!('type' in tx.metadata)) {
+				console.error(`no field "type" in the metadata and so do not conform to DungeonTransaction`);
+			}
+		}
+
 		const onchainAction: OnChainAction = {
-			tx,
+			tx: tx as DungeonTransaction,
 			inclusion: inclusion || 'BeingFetched',
 			final: undefined,
 			status: undefined,
@@ -224,18 +257,18 @@ export function initAccountData() {
 	}
 
 	return {
+		$onchainActions,
 		onchainActions: {
 			subscribe: onchainActions.subscribe,
 		},
 
+		$offchainState,
 		offchainState: {
 			subscribe: offchainState.subscribe,
 			move,
 			back,
 			reset: resetOffchainState,
 		},
-
-		$offchainState,
 
 		load,
 		unload,

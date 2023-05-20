@@ -130,31 +130,6 @@ contract Dungeon is Proxied {
         emit StateUpdate(player, currentPosition, characters[player].life);
     }
 
-    function acknowledgeMissedResolution(
-        address player,
-        bytes32 secret,
-        Action[] calldata actions,
-        bytes24 furtherActions
-    ) external {
-        Commitment storage commitment = commitments[player];
-        (uint32 epoch,) = _epoch();
-        require(commitment.epoch > 0 && commitment.epoch != epoch, "NO_NEED");
-
-        _checkHash(commitment.hash, secret, actions, furtherActions);
-
-        commitment.epoch = 0;
-
-        // TODO make it count
-        characters[msg.sender].life = 0;
-
-        emit CommitmentVoid(player, epoch);
-
-        // CommitmentVoid event contains everything needed for an indexer to recompute the state
-        // but here for simplicity we emit the latest data just computed
-
-        emit StateUpdate(player, characters[player].position, 0);
-    }
-
     function getEpoch() public view returns (uint256) {
         return (block.timestamp - START_TIMESTAMP) / TOTAL;
     }
@@ -231,6 +206,19 @@ contract Dungeon is Proxied {
         Commitment storage commitment = commitments[player];
 
         (uint32 epoch, bool commiting) = _epoch();
+
+        if (commitment.epoch != epoch) {
+            // TODO make it count
+            // if we set to zero life, then we should make it a separate tx, for anyone to claim ? instea do inside this if statement
+            characters[msg.sender].life = 0;
+            commitment.epoch = 0;
+
+            emit CommitmentVoid(player, epoch);
+
+            // CommitmentVoid event contains everything needed for an indexer to recompute the state
+            // but here for simplicity we emit the latest data just computed
+            emit StateUpdate(player, characters[player].position, 0);
+        }
 
         require(commiting, "IN_RESOLUTION_PHASE");
         require(commitment.epoch == 0 || commitment.epoch == epoch, "PREVIOUS_COMMITMENT_TO_RESOLVE");

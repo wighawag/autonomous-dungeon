@@ -1,5 +1,10 @@
-import type {ConnectedState, ConnectedNetworkState, GenericContractsInfos} from 'web3-connection';
-import type {Chain, Hash, WalletClient} from 'viem';
+import type {
+	ConnectedState,
+	ConnectedNetworkState,
+	GenericContractsInfos,
+	ConnectedAccountState,
+} from 'web3-connection';
+import {createPublicClient, type Chain, type Hash, type WalletClient} from 'viem';
 import type {WriteContractParameters} from 'viem/contract';
 import type {NetworkConfig} from '$lib/config';
 import type {Abi} from 'abitype';
@@ -29,9 +34,13 @@ export const contracts = {
 			network: ConnectedNetworkState<NetworkConfig>;
 			contracts: ViemContracts;
 			client: WalletClient;
+			account: ConnectedAccountState;
 		}) => Promise<T>
 	) {
 		return execute(async ({connection, network, account}) => {
+			const publicClient = createPublicClient({
+				transport: custom(connection.provider),
+			});
 			const client = createWalletClient({
 				transport: custom(connection.provider),
 			});
@@ -50,8 +59,17 @@ export const contracts = {
 						args: args.args as any,
 					});
 				};
+				const read = (args: ContractParameters<Abi>) => {
+					return publicClient.readContract({
+						address: contract.address,
+						abi: contract.abi,
+						functionName: args.functionName,
+						args: args.args as any,
+					});
+				};
 				const viemContract: ViemContract<Abi> = {
 					write,
+					read,
 				} as ViemContract<Abi>;
 				(prev as any)[curr] = viemContract;
 				return prev;
@@ -61,6 +79,7 @@ export const contracts = {
 				network,
 				client,
 				contracts,
+				account,
 			});
 		});
 	},

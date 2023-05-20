@@ -1,8 +1,9 @@
 <script lang="ts">
 	import {controller, phase} from '$lib/blockchain/state/Controller';
-	import {accountData} from '$lib/web3';
+	import {account, accountData} from '$lib/web3';
+	import type {CommitAction, OnChainAction} from '$lib/web3/account-data';
 	import {contracts} from '$lib/web3/viem';
-	import {fromCellActionsToRoomActions, xyToBigIntID} from 'jolly-roger-common';
+	import {fromCellActionsToRoomActions, xyToBigIntID, type RoomAction} from 'jolly-roger-common';
 	import {encodeAbiParameters, keccak256} from 'viem';
 
 	const offchainState = accountData.offchainState;
@@ -39,6 +40,7 @@
 			).slice(0, 50) as `0x${string}`;
 
 			connection.provider.setNextMetadata({
+				type: 'commit',
 				actions,
 				cellActions,
 				secret,
@@ -46,6 +48,43 @@
 			contracts.Dungeon.write({
 				functionName: 'makeCommitment',
 				args: [commitmentHash],
+			});
+		});
+	}
+
+	function reveal() {
+		contracts.execute(async ({contracts, connection, account}) => {
+			const onchainActions = accountData.$onchainActions;
+			let actionToCommit: OnChainAction | undefined;
+			let actions: CommitAction[] | undefined;
+			let secret: `0x${string}` | undefined;
+			let txHash: `0x${string}` | undefined;
+			for (const onchainAction of Object.entries(onchainActions)) {
+				const metadata = onchainAction[1].tx.metadata;
+				console.log({metadata});
+				if (metadata.type === 'reveal') {
+				} else if (metadata.type === 'commit') {
+					if (!actionToCommit || actionToCommit.tx.timestamp < onchainAction[1].tx.timestamp) {
+						actionToCommit = onchainAction[1];
+						txHash = onchainAction[0] as `0x${string}`;
+						actions = metadata.actions;
+						secret = metadata.secret;
+					}
+				}
+			}
+
+			if (!actionToCommit || !secret || !actions) {
+				throw new Error(`no action to commit`);
+			}
+
+			// TODO jolly-rogeR: type-safe via web3-connection type config (AccountData Management)
+			connection.provider.setNextMetadata({
+				type: 'reveal',
+				commitTx: txHash,
+			});
+			contracts.Dungeon.write({
+				functionName: 'resolve',
+				args: [account.address, secret, actions, '0x000000000000000000000000000000000000000000000000'],
 			});
 		});
 	}
@@ -58,13 +97,21 @@
 		class={`fixed top-20 right-0 card w-96 ${actionsLeft <= 0 ? 'bg-red-500' : 'bg-neutral'} text-neutral-content m-1`}
 	>
 		<div class="card-body items-center text-center">
-			<p>{$phase.timeLeftToCommit} seconds left</p>
-			<h2 class="card-title">Ready to Commit?</h2>
-			<p>You have {actionsLeft} actions left</p>
-			<div class="card-actions justify-end">
-				<button class="btn btn-primary" on:click={() => commit()}>Commit</button>
-				<button class="btn btn-ghost" on:click={() => reset()}>Reset</button>
-			</div>
+			{#if $phase.comitting}
+				<p>{$phase.timeLeftToCommit} seconds left</p>
+				<h2 class="card-title">Ready to Commit?</h2>
+				<p>You have {actionsLeft} actions left</p>
+				<div class="card-actions justify-end">
+					<button class="btn btn-primary" on:click={() => commit()}>Commit</button>
+					<button class="btn btn-ghost" on:click={() => reset()}>Reset</button>
+				</div>
+			{:else}
+				<p>{$phase.timeLeftToReveal} seconds left</p>
+				<h2 class="card-title">Reveal your move!</h2>
+				<div class="card-actions justify-end">
+					<button class="btn btn-primary" on:click={() => reveal()}>Reveal</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
