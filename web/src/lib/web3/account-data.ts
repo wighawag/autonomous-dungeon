@@ -21,6 +21,8 @@ export type OnChainAction = {
 
 export type OnChainActions = {[hash: `0x${string}`]: OnChainAction};
 
+export type AccountData = {onchainActions: OnChainActions};
+
 function fromOnChainActionToPendingTransaction(hash: `0x${string}`, onchainAction: OnChainAction): PendingTransaction {
 	return {
 		hash,
@@ -41,7 +43,7 @@ export function initAccountData() {
 	async function load(address: `0x${string}`, chainId: string, genesisHash?: string) {
 		key = `account_${address}_${chainId}_${genesisHash}`;
 		const dataSTR = localStorage.getItem(key);
-		const data: {onchainActions: OnChainActions} = dataSTR ? JSON.parse(dataSTR) : {onchainActions: {}};
+		const data: AccountData = dataSTR ? JSON.parse(dataSTR) : {onchainActions: {}};
 		const pending_transactions: PendingTransaction[] = [];
 		for (const hash in data.onchainActions) {
 			const onchainAction = (data.onchainActions as any)[hash];
