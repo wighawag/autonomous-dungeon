@@ -76,7 +76,8 @@ contract Dungeon is Proxied {
     mapping(address => Character) public characters;
     mapping(address => Commitment) public commitments;
 
-    bytes32 public epochHash;
+    bytes32 internal epochHash_0;
+    bytes32 internal epochHash_1;
 
     // ----------------------------------------------------------------------------------------------
     // STORAGE
@@ -111,11 +112,11 @@ contract Dungeon is Proxied {
         _checkHash(commitment.hash, secret, actions, furtherActions);
 
         Character memory character = characters[player];
-        Room memory currentRoom = computeRoom(roomHash(character.position));
+        Room memory currentRoom = computeRoom(roomHash(epoch, character.position));
 
         for (uint256 i = 0; i < actions.length; i++) {
             Action memory action = actions[i];
-            Room memory newRoom = computeRoom(roomHash(action.position));
+            Room memory newRoom = computeRoom(roomHash(epoch, action.position));
 
             if (_isValidMove(character.position, currentRoom, action.position, newRoom)) {
                 character.position = action.position;
@@ -155,8 +156,25 @@ contract Dungeon is Proxied {
     function _handleEpochHash(uint32 epoch, bytes32 secret) internal {
         // we compute our epochHash as reveal are entered
         // Note that later we might want to only use commitment who has gone deep enough in the dungeon
-        epochHash = secret ^ epochHash;
-        emit EpochHashUpdate(epoch + 1, epochHash);
+        if (epoch % 2 == 0) {
+            console.log("epoch % 2 == 0, we modify epochHash_1");
+            console.logUint(epoch);
+            console.log("before");
+            console.logBytes32(epochHash_1);
+            epochHash_1 = secret ^ epochHash_1;
+            console.log("after");
+            console.logBytes32(epochHash_1);
+            emit EpochHashUpdate(epoch + 1, epochHash_1);
+        } else {
+            console.log("epoch % 2 == 1, we modify epochHash_0");
+            console.logUint(epoch);
+            console.log("before");
+            console.logBytes32(epochHash_0);
+            epochHash_0 = secret ^ epochHash_0;
+            console.log("after");
+            console.logBytes32(epochHash_0);
+            emit EpochHashUpdate(epoch + 1, epochHash_0);
+        }
     }
 
     function _handleCharacter(address player, Character memory character) internal {
@@ -167,23 +185,6 @@ contract Dungeon is Proxied {
 
         emit PlayerUpdate(player, character.position, character.life, character.gold, character.equipment);
     }
-
-    function getEpoch() public view returns (uint256) {
-        return (block.timestamp - START_TIMESTAMP) / TOTAL;
-    }
-
-    function isActionepoch() public view returns (bool) {
-        return (block.timestamp - getEpoch() * TOTAL) < ACTION_period;
-    }
-
-    // we do not need this anymore, we use player generated epochHash
-    // function getEpochHash(uint256 epochToGenerate) public pure returns (bytes32) {
-    //     return keccak256(abi.encodePacked(epochToGenerate));
-    // }
-
-    // function getEpochHash() public view returns (bytes32) {
-    //     return getEpochHash(getEpoch());
-    // }
 
     function roomID(int32 x, int32 y) public pure returns (uint256) {
         unchecked {
@@ -198,11 +199,25 @@ contract Dungeon is Proxied {
         }
     }
 
-    function roomHash(int32 x, int32 y) public view returns (bytes32) {
-        return roomHash(roomID(x, y));
+    function roomHash(uint32 epoch, int32 x, int32 y) public view returns (bytes32) {
+        return roomHash(epoch, roomID(x, y));
     }
 
-    function roomHash(uint256 id) public view returns (bytes32) {
+    function roomHash(uint32 epoch, uint256 id) public view returns (bytes32) {
+        // uint32 epoch = getEpoch();
+        bytes32 epochHash = epoch % 2 == 0 ? epochHash_0 : epochHash_1;
+
+        // console.log("epoch");
+        // console.logUint(epoch);
+        // console.log("epoch % 2 == 0");
+        // console.logBool(epoch % 2 == 0);
+        // console.log("epoch % 2 == 0 ? epochHash_0 : epochHash_1");
+        // console.logBytes32(epoch % 2 == 0 ? epochHash_0 : epochHash_1);
+        // console.log("epochHash_0");
+        // console.logBytes32(epochHash_0);
+        // console.log("epochHash_1");
+        // console.logBytes32(epochHash_1);
+
         return keccak256(abi.encodePacked(epochHash, id));
     }
 
@@ -295,7 +310,7 @@ contract Dungeon is Proxied {
         require(block.timestamp >= START_TIMESTAMP, "GAME_NOT_STARTED");
 
         uint256 timePassed = block.timestamp - START_TIMESTAMP;
-        epoch = uint32(timePassed / epochDuration + 1);
+        epoch = uint32((timePassed / epochDuration) + 1);
         commiting = timePassed - ((epoch - 1) * epochDuration) < ACTION_period;
     }
 

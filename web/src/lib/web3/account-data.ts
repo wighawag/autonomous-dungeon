@@ -3,19 +3,17 @@ import {writable} from 'svelte/store';
 import type {EIP1193TransactionWithMetadata} from 'web3-connection';
 import {initEmitter} from '$external/callbacks';
 import type {PendingTransaction} from '$external/tx-observer';
-import {bnReplacer, bnReviver, type CellAction, type CellPosition, type RoomAction} from 'jolly-roger-common';
+// import {bnReplacer, bnReviver, type CellAction, type CellPosition, type RoomAction} from 'jolly-roger-common';
+import {bnReplacer, bnReviver, type RoomAction, type RoomPosition} from 'jolly-roger-common';
 import {logs} from 'named-logs';
 
 const logger = logs('account-data');
 
-export type CommitAction = {
-	position: bigint;
-};
-
 export type CommitMetadata = {
 	type: 'commit'; // TODO remove undefined
-	cellActions: CellAction[];
-	actions: CommitAction[];
+	// cellActions: CellAction[];
+	roomActions: RoomAction[]; // no
+	actions: RoomAction[];
 	secret: `0x${string}`;
 };
 
@@ -56,7 +54,8 @@ export type OnChainActions = {[hash: `0x${string}`]: OnChainAction};
 
 export type OffchainState = {
 	epoch?: Epoch;
-	actions: CellAction[];
+	// actions: CellAction[];
+	actions: RoomAction[];
 };
 
 const defaultOffchainState: OffchainState = {
@@ -230,7 +229,17 @@ export function initAccountData() {
 		offchainState.set($offchainState);
 	}
 
-	function move(epoch: Epoch, from: CellPosition, to: CellPosition) {
+	// function move(epoch: Epoch, from: CellPosition, to: CellPosition) {
+	// 	if ($offchainState.epoch && epoch.hash !== $offchainState.epoch.hash) {
+	// 		resetOffchainState(false);
+	// 		$offchainState.epoch = epoch;
+	// 	}
+	// 	$offchainState.actions.push({type: 'move', to, from});
+	// 	save();
+	// 	offchainState.set($offchainState);
+	// }
+
+	function move(epoch: Epoch, from: RoomPosition, to: RoomPosition) {
 		if ($offchainState.epoch && epoch.hash !== $offchainState.epoch.hash) {
 			resetOffchainState(false);
 			$offchainState.epoch = epoch;

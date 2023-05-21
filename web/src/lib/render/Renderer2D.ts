@@ -2,14 +2,14 @@ import {writable, type Readable, type Subscriber, type Unsubscriber, type Writab
 import type {CameraState} from './camera';
 import type {RenderViewState} from './renderview';
 import {Blockie} from '$lib/utils/eth/blockie';
-import type {Room} from 'jolly-roger-common';
+import {roomDirection, type Room} from 'jolly-roger-common';
 import {controller} from '$lib/game/Controller';
 import type {GameState} from '$lib/game/GameState';
 
 const CELL_SIZE = 50;
 const ROOM_CELL_SIZE = 3;
 const ROOM_PADDING = 10;
-const ROOM_SIZE = CELL_SIZE * ROOM_CELL_SIZE + ROOM_PADDING * 2;
+export const ROOM_SIZE = CELL_SIZE * ROOM_CELL_SIZE + ROOM_PADDING * 2;
 const DOOR_SIZE = ROOM_SIZE / 1;
 const WALL_STROKE_SIZE = 7;
 const FONT = `${CELL_SIZE}px serif`;
@@ -51,7 +51,7 @@ function drawWalls(ctx: CanvasRenderingContext2D, room: Room, cx: number, cy: nu
 	ctx.fillRect(left, top + DOOR_SIDE_WALL_SIZE + DOOR_SIZE, WALL_STROKE_SIZE, DOOR_SIDE_WALL_SIZE);
 }
 
-export class WebGLRenderer implements Readable<RenderViewState> {
+export class Canvas2DRenderer implements Readable<RenderViewState> {
 	private $gameState: GameState | undefined;
 	private canvas!: HTMLCanvasElement;
 	private ctx!: CanvasRenderingContext2D;
@@ -151,12 +151,7 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 		}
 
 		const player = this.$gameState?.player;
-		const playerRoom = player
-			? {
-					x: Math.floor((player.cellPosition.cx + 1) / 3),
-					y: Math.floor((player.cellPosition.cy + 1) / 3),
-			  }
-			: undefined;
+		const playerRoom = player ? player.position : undefined;
 		if (player && playerRoom) {
 			ctx.fillStyle = 'white';
 			ctx.strokeStyle = 'white';
@@ -171,21 +166,56 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 				}
 			}
 
-			for (const action of player.actions) {
-				const actionRoom = {
-					x: Math.floor((action.from.cx + 1) / 3),
-					y: Math.floor((action.from.cy + 1) / 3),
-				};
-				const positionInRoom = {
-					x: action.from.cx - actionRoom.x * 3,
-					y: action.from.cy - actionRoom.y * 3,
-				};
-				ctx.globalAlpha = 0.3;
-				ctx.fillText(
-					'👣',
-					actionRoom.x * ROOM_SIZE + positionInRoom.x * CELL_SIZE,
-					actionRoom.y * ROOM_SIZE + positionInRoom.y * CELL_SIZE
-				);
+			for (let i = 0; i < player.actions.length; i++) {
+				const action = player.actions[i];
+				ctx.globalAlpha = 0.3 + 0.5 * (i / player.actions.length);
+
+				// ctx.fillText('👣', actionRoom.x * ROOM_SIZE, actionRoom.y * ROOM_SIZE);
+				ctx.strokeStyle = 'white';
+				const prev_lineWidth = ctx.lineWidth;
+				ctx.lineWidth = 5;
+				const direction = roomDirection(action.from, action.to);
+				const LEAD_FROM = -ROOM_SIZE / 8;
+				const LEAD_TO = ROOM_SIZE / 1.8;
+				switch (direction) {
+					case 0:
+						drawArrow(
+							ctx,
+							action.from.x * ROOM_SIZE,
+							action.from.y * ROOM_SIZE + LEAD_FROM,
+							action.to.x * ROOM_SIZE,
+							action.to.y * ROOM_SIZE + LEAD_TO
+						);
+						break;
+					case 1:
+						drawArrow(
+							ctx,
+							action.from.x * ROOM_SIZE - LEAD_FROM,
+							action.from.y * ROOM_SIZE,
+							action.to.x * ROOM_SIZE - LEAD_TO,
+							action.to.y * ROOM_SIZE
+						);
+						break;
+					case 2:
+						drawArrow(
+							ctx,
+							action.from.x * ROOM_SIZE,
+							action.from.y * ROOM_SIZE - LEAD_FROM,
+							action.to.x * ROOM_SIZE,
+							action.to.y * ROOM_SIZE - LEAD_TO
+						);
+						break;
+					case 3:
+						drawArrow(
+							ctx,
+							action.from.x * ROOM_SIZE + LEAD_FROM,
+							action.from.y * ROOM_SIZE,
+							action.to.x * ROOM_SIZE + LEAD_TO,
+							action.to.y * ROOM_SIZE
+						);
+						break;
+				}
+				ctx.lineWidth = prev_lineWidth;
 				ctx.globalAlpha = 1;
 			}
 		}
@@ -200,14 +230,10 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 		}
 
 		if (player && playerRoom) {
-			const playerRoomRoomPosition = {
-				x: player.cellPosition.cx - playerRoom.x * 3,
-				y: player.cellPosition.cy - playerRoom.y * 3,
-			};
 			Blockie.get(player.address).draw(
 				ctx,
-				playerRoom.x * ROOM_SIZE + playerRoomRoomPosition.x * CELL_SIZE - CELL_SIZE / 2,
-				playerRoom.y * ROOM_SIZE + playerRoomRoomPosition.y * CELL_SIZE - CELL_SIZE / 2,
+				playerRoom.x * ROOM_SIZE - CELL_SIZE / 2,
+				playerRoom.y * ROOM_SIZE - CELL_SIZE / 2,
 				8
 			);
 
@@ -228,4 +254,55 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 		// ctx.fillText('W', 40, 5);
 		ctx.resetTransform();
 	}
+
+	fromCameraToRoom(x: number, y: number) {
+		const rx = x + ROOM_SIZE / 2;
+		const ry = y + ROOM_SIZE / 2;
+		const room = {
+			x: Math.floor(rx / ROOM_SIZE),
+			y: Math.floor(ry / ROOM_SIZE),
+		};
+		const rx_diff = rx - room.x * ROOM_SIZE;
+		const ry_diff = ry - room.y * ROOM_SIZE;
+		// const x_diff = x - room.x * ROOM_SIZE;
+		// const y_diff = y - room.y * ROOM_SIZE;
+		const cx = Math.floor((rx_diff / ROOM_SIZE) * 3 - 1);
+		const cy = Math.floor((ry_diff / ROOM_SIZE) * 3 - 1);
+
+		// console.log('xy', x, y);
+		// console.log('r', rx, ry);
+		// console.log('room_xy', room.x, room.y);
+		// console.log('cxy', cx, cy);
+		// console.log('r_diff', rx_diff, ry_diff);
+		// console.log('_diff', x_diff, y_diff);
+		// console.log('ROOM_SIZE', ROOM_SIZE);
+		return {
+			room,
+			cell: {
+				x: cx,
+				y: cy,
+			},
+		};
+	}
+}
+
+function drawArrow(
+	ctx: CanvasRenderingContext2D,
+	fromx: number,
+	fromy: number,
+	tox: number,
+	toy: number,
+	head?: number
+) {
+	ctx.beginPath();
+	head = head || 10;
+	const dx = tox - fromx;
+	const dy = toy - fromy;
+	const angle = Math.atan2(dy, dx);
+	ctx.moveTo(fromx, fromy);
+	ctx.lineTo(tox, toy);
+	ctx.lineTo(tox - head * Math.cos(angle - Math.PI / 6), toy - head * Math.sin(angle - Math.PI / 6));
+	ctx.moveTo(tox, toy);
+	ctx.lineTo(tox - head * Math.cos(angle + Math.PI / 6), toy - head * Math.sin(angle + Math.PI / 6));
+	ctx.stroke();
 }

@@ -464,3 +464,5 @@ export class Camera extends BasicObjectStore<CameraState> {
 		this._update();
 	}
 }
+
+export const camera = new Camera();

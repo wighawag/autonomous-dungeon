@@ -3,6 +3,7 @@ layout {
 		pane {}
 		pane split_direction="vertical" {
 			pane command="bash"  {
+				// args "-c" "pnpm start:local_node 2>&1 | tee ./.anvil.log; ${SHELL-bash}"
 				args "-c" "pnpm start:local_node; ${SHELL-bash}"
 			}
 			pane {

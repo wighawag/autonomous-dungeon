@@ -1,10 +1,11 @@
 import {logs} from 'named-logs';
-import {type CellPosition, type CellAction, generateEpoch, cellPositionFrom, getEpochHash} from 'jolly-roger-common';
+// import {type CellPosition, type CellAction, generateEpoch, cellPositionFrom, getEpochHash} from 'jolly-roger-common';
 
 import {accountData} from '$lib/web3';
 import {derived, writable} from 'svelte/store';
 import {time} from '$lib/time';
 import {gameState, type GameState} from './GameState';
+import {generateEpoch, getEpochHash, roomPositionFrom, type RoomPosition} from 'jolly-roger-common';
 
 const logger = logs('controller');
 
@@ -15,6 +16,7 @@ const START_TIMESTAMP = 0;
 export function initController() {
 	const max = 64;
 
+	// TODO remove this
 	let $dungeon = generateEpoch(getEpochHash(0));
 	const dungeon = writable($dungeon);
 
@@ -28,7 +30,19 @@ export function initController() {
 			dungeon.set($dungeon);
 		}
 	});
-	function move(to: CellPosition) {
+	// function move(to: CellPosition) {
+	// 	if (!$gameState) {
+	// 		throw new Error(`Game not initialised`);
+	// 	}
+	// 	if (!$gameState.player) {
+	// 		throw new Error(`No player`);
+	// 	}
+	// 	const $state = accountData.$offchainState;
+	// 	if ($state.actions.length < 64 && $dungeon.isValidCellMove($gameState.player.cellPosition, to)) {
+	// 		accountData.offchainState.move($gameState.epoch, $gameState.player.cellPosition, to);
+	// 	}
+	// }
+	function move(to: RoomPosition) {
 		if (!$gameState) {
 			throw new Error(`Game not initialised`);
 		}
@@ -36,8 +50,8 @@ export function initController() {
 			throw new Error(`No player`);
 		}
 		const $state = accountData.$offchainState;
-		if ($state.actions.length < 64 && $dungeon.isValidCellMove($gameState.player.cellPosition, to)) {
-			accountData.offchainState.move($gameState.epoch, $gameState.player.cellPosition, to);
+		if ($state.actions.length < 64 && $dungeon.isValidMove($gameState.player.position, to)) {
+			accountData.offchainState.move($gameState.epoch, $gameState.player.position, to);
 		}
 	}
 
@@ -63,17 +77,21 @@ export function initController() {
 				throw new Error(`No player`);
 			}
 			if (ev.key === 'ArrowLeft' || ev.key === 'Left' || ev.key === 'a') {
-				move(cellPositionFrom($gameState.player.cellPosition, -1, 0));
+				move(roomPositionFrom($gameState.player.position, -1, 0));
 			} else if (ev.key === 'ArrowUp' || ev.key === 'Up' || ev.key === 'w') {
-				move(cellPositionFrom($gameState.player.cellPosition, 0, -1));
+				move(roomPositionFrom($gameState.player.position, 0, -1));
 			} else if (ev.key === 'ArrowDown' || ev.key === 'Down' || ev.key === 's') {
-				move(cellPositionFrom($gameState.player.cellPosition, 0, 1));
+				move(roomPositionFrom($gameState.player.position, 0, 1));
 			} else if (ev.key === 'ArrowRight' || ev.key === 'Right' || ev.key === 'd') {
-				move(cellPositionFrom($gameState.player.cellPosition, 1, 0));
+				move(roomPositionFrom($gameState.player.position, 1, 0));
 			} else if (ev.key === 'Backspace') {
 				back();
 			}
 		});
+	}
+
+	function onRoomClicked(x: number, y: number, cx: number, cy: number) {
+		console.log(x, y, cx, cy);
 	}
 
 	return {
@@ -87,6 +105,7 @@ export function initController() {
 				return $dungeon;
 			},
 		},
+		onRoomClicked,
 	};
 }
 

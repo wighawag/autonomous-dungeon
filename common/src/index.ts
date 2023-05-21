@@ -1,16 +1,16 @@
 import {encodePacked, keccak256} from 'viem';
 export * from './bn';
 
-export type CellPosition = {
-	cx: number;
-	cy: number;
-};
+// export type CellPosition = {
+// 	cx: number;
+// 	cy: number;
+// };
 
-export type CellAction = {
-	type: 'move';
-	from: CellPosition; // not really needed, // TODO remove
-	to: CellPosition;
-};
+// export type CellAction = {
+// 	type: 'move';
+// 	from: CellPosition; // not really needed, // TODO remove
+// 	to: CellPosition;
+// };
 
 export type RoomAction = {
 	type: 'move';
@@ -23,27 +23,27 @@ export type RoomPosition = {
 	y: number;
 };
 
-export function cellDirection(from: CellPosition, to: CellPosition): 0 | 1 | 2 | 3 | undefined {
-	const x_diff = to.cx - from.cx;
-	const y_diff = to.cy - from.cy;
-	if (x_diff === 0) {
-		if (y_diff === 1) {
-			return 2;
-		} else if (y_diff === -1) {
-			return 0;
-		} else {
-			return undefined;
-		}
-	} else {
-		if (x_diff === 1) {
-			return 1;
-		} else if (x_diff === -1) {
-			return 3;
-		} else {
-			return undefined;
-		}
-	}
-}
+// export function cellDirection(from: CellPosition, to: CellPosition): 0 | 1 | 2 | 3 | undefined {
+// 	const x_diff = to.cx - from.cx;
+// 	const y_diff = to.cy - from.cy;
+// 	if (x_diff === 0) {
+// 		if (y_diff === 1) {
+// 			return 2;
+// 		} else if (y_diff === -1) {
+// 			return 0;
+// 		} else {
+// 			return undefined;
+// 		}
+// 	} else {
+// 		if (x_diff === 1) {
+// 			return 1;
+// 		} else if (x_diff === -1) {
+// 			return 3;
+// 		} else {
+// 			return undefined;
+// 		}
+// 	}
+// }
 
 export function roomDirection(from: RoomPosition, to: RoomPosition): 0 | 1 | 2 | 3 | undefined {
 	const x_diff = to.x - from.x;
@@ -67,33 +67,33 @@ export function roomDirection(from: RoomPosition, to: RoomPosition): 0 | 1 | 2 |
 	}
 }
 
-export function getRoomPositionFromCell(x: number, y: number): RoomPosition {
-	return {
-		x: Math.floor((x + 1) / 3),
-		y: Math.floor((y + 1) / 3),
-	};
-}
+// export function getRoomPositionFromCell(x: number, y: number): RoomPosition {
+// 	return {
+// 		x: Math.floor((x + 1) / 3),
+// 		y: Math.floor((y + 1) / 3),
+// 	};
+// }
 
-export function fromCellActionsToRoomActions(cellActions: CellAction[]): RoomAction[] {
-	const roomActions: RoomAction[] = [];
-	for (const cellAction of cellActions) {
-		if (cellAction.type === 'move') {
-			const fromRoom = getRoomPositionFromCell(cellAction.from.cx, cellAction.from.cy);
-			const toRoom = getRoomPositionFromCell(cellAction.to.cx, cellAction.to.cy);
-			if (fromRoom.x != toRoom.x || fromRoom.y != toRoom.y) {
-				roomActions.push({
-					from: fromRoom,
-					to: toRoom,
-					type: 'move',
-				});
-			}
-		} else {
-			throw new Error(`CellAction type ${cellAction.type} is not supported`);
-		}
-	}
+// export function fromCellActionsToRoomActions(cellActions: CellAction[]): RoomAction[] {
+// 	const roomActions: RoomAction[] = [];
+// 	for (const cellAction of cellActions) {
+// 		if (cellAction.type === 'move') {
+// 			const fromRoom = getRoomPositionFromCell(cellAction.from.cx, cellAction.from.cy);
+// 			const toRoom = getRoomPositionFromCell(cellAction.to.cx, cellAction.to.cy);
+// 			if (fromRoom.x != toRoom.x || fromRoom.y != toRoom.y) {
+// 				roomActions.push({
+// 					from: fromRoom,
+// 					to: toRoom,
+// 					type: 'move',
+// 				});
+// 			}
+// 		} else {
+// 			throw new Error(`CellAction type ${cellAction.type} is not supported`);
+// 		}
+// 	}
 
-	return roomActions;
-}
+// 	return roomActions;
+// }
 
 export type RawRoom = {
 	// north, east, west, south
@@ -211,18 +211,32 @@ export function generateEpoch(epochHash: `0x${string}`) {
 		return room;
 	}
 
-	function getRoomFromCell(x: number, y: number): Room {
-		const roomPosition = getRoomPositionFromCell(x, y);
-		return getRoom(roomPosition.x, roomPosition.y);
-	}
+	// function getRoomFromCell(x: number, y: number): Room {
+	// 	const roomPosition = getRoomPositionFromCell(x, y);
+	// 	return getRoom(roomPosition.x, roomPosition.y);
+	// }
 
-	function isValidCellMove(from: CellPosition, to: CellPosition) {
-		const dir = cellDirection(from, to);
+	// function isValidCellMove(from: CellPosition, to: CellPosition) {
+	// 	const dir = cellDirection(from, to);
+	// 	if (typeof dir !== 'number') {
+	// 		return false;
+	// 	}
+	// 	const from_room = getRoomFromCell(from.cx, from.cy);
+	// 	const to_room = getRoomFromCell(to.cx, to.cy);
+	// 	if (from_room === to_room) {
+	// 		return true;
+	// 	} else {
+	// 		return from_room.exits[dir]; //  && (from.cx % 3 === 0 || from.cy % 3 === 0);
+	// 	}
+	// }
+
+	function isValidMove(from: RoomPosition, to: RoomPosition) {
+		const dir = roomDirection(from, to);
 		if (typeof dir !== 'number') {
 			return false;
 		}
-		const from_room = getRoomFromCell(from.cx, from.cy);
-		const to_room = getRoomFromCell(to.cx, to.cy);
+		const from_room = getRoom(from.x, from.y);
+		const to_room = getRoom(to.x, to.y);
 		if (from_room === to_room) {
 			return true;
 		} else {
@@ -233,18 +247,26 @@ export function generateEpoch(epochHash: `0x${string}`) {
 	return {
 		getRawRoom,
 		getRoom,
-		getRoomFromCell,
-		isValidCellMove,
+		// getRoomFromCell,
+		// isValidCellMove,
+		isValidMove,
 		epoch: {
 			hash: epochHash,
 		},
 	};
 }
 
-export function cellPositionFrom(position: CellPosition, x: 0 | -1 | 1, y: 0 | -1 | 1) {
+// export function cellPositionFrom(position: CellPosition, x: 0 | -1 | 1, y: 0 | -1 | 1) {
+// 	return {
+// 		cx: position.cx + x,
+// 		cy: position.cy + y,
+// 	};
+// }
+
+export function roomPositionFrom(position: RoomPosition, x: 0 | -1 | 1, y: 0 | -1 | 1) {
 	return {
-		cx: position.cx + x,
-		cy: position.cy + y,
+		x: position.x + x,
+		y: position.y + y,
 	};
 }
 

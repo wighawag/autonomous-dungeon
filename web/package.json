@@ -36,7 +36,7 @@
     "pretty-ms": "^8.0.0",
     "theme-change": "^2.5.0",
     "viem": "^0.3.31",
-    "web3-connection": "^0.0.24",
+    "web3-connection": "^0.0.26",
     "web3w-walletconnect-loader": "^0.4.3"
   },
   "scripts": {

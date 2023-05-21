@@ -1,13 +1,13 @@
 <script lang="ts">
 	import {onMount} from 'svelte';
-	import {Camera} from './camera';
-	import {WebGLRenderer} from './Renderer2D';
+	import {Camera, camera} from './camera';
+	import {Canvas2DRenderer} from './Renderer2D';
 	import type {GameState} from '$lib/game/GameState';
 	import type {Readable} from 'svelte/store';
+	import {controller} from '$lib/game/Controller';
 
 	export let gameState: Readable<GameState>;
-	let renderer: WebGLRenderer = new WebGLRenderer();
-	let camera: Camera;
+	let renderer: Canvas2DRenderer = new Canvas2DRenderer();
 	function render(time: number) {
 		renderer.render(time);
 		requestAnimationFrame(render);
@@ -24,14 +24,13 @@
 
 		renderer.initialize(canvas, ctx);
 
-		camera = new Camera();
 		camera.start(canvas, renderer);
 		camera.subscribe((v) => renderer.updateView(v));
 
-		// const actionHandler = new ActionHandler();
-		// camera.onClick = (x, y) => {
-		// 	actionHandler.onCell(Math.floor(x), Math.floor(y));
-		// };
+		camera.onClick = (x, y) => {
+			const {room, cell} = renderer.fromCameraToRoom(x, y);
+			controller.onRoomClicked(room.x, room.y, cell.x, cell.y);
+		};
 
 		gameState.subscribe(($gameState) => {
 			renderer.updateState($gameState);

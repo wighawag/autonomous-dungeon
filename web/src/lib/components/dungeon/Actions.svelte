@@ -2,13 +2,15 @@
 	import {controller, phase} from '$lib/game/Controller';
 	import {gameState} from '$lib/game/GameState';
 	import {accountData, devProvider, execute} from '$lib/web3';
-	import type {CommitAction, OnChainAction} from '$lib/web3/account-data';
+	import type {OnChainAction} from '$lib/web3/account-data';
 	import {contracts} from '$lib/web3/viem';
-	import {fromCellActionsToRoomActions, xyToBigIntID, type RoomAction} from 'jolly-roger-common';
+	import {xyToBigIntID, type RoomAction} from 'jolly-roger-common';
 	import {get} from 'svelte/store';
 	import {encodeAbiParameters, encodePacked, keccak256} from 'viem';
 	import {createExecutor, increaseBlockTime} from '$lib/utils/debug';
 	import {timeToText} from '$lib/utils/time';
+	import {camera} from '$lib/render/camera';
+	import {ROOM_SIZE} from '$lib/render/Renderer2D';
 
 	const execute_increaseBlockTime = createExecutor(increaseBlockTime);
 
@@ -20,9 +22,8 @@
 
 	function commit() {
 		contracts.execute(async ({contracts, connection}) => {
-			const cellActions = accountData.$offchainState.actions;
-			const roomActions = fromCellActionsToRoomActions(cellActions);
-			const actions = roomActions.map((v) => ({
+			const actions = accountData.$offchainState.actions;
+			const contractActions = actions.map((v) => ({
 				position: xyToBigIntID(v.to.x, v.to.y),
 			}));
 
@@ -46,7 +47,7 @@
 							],
 						},
 					],
-					[secret, actions]
+					[secret, contractActions]
 				)
 			).slice(0, 50) as `0x${string}`;
 
@@ -54,7 +55,6 @@
 				type: 'commit',
 				epoch: get(gameState).epoch,
 				actions,
-				cellActions,
 				secret,
 			});
 			contracts.Dungeon.write({
@@ -68,7 +68,7 @@
 		contracts.execute(async ({contracts, connection, account}) => {
 			const onchainActions = accountData.$onchainActions;
 			let actionToCommit: OnChainAction | undefined;
-			let actions: CommitAction[] | undefined;
+			let actions: RoomAction[] | undefined;
 			let secret: `0x${string}` | undefined;
 			let txHash: `0x${string}` | undefined;
 			for (const onchainAction of Object.entries(onchainActions)) {
@@ -89,6 +89,10 @@
 				throw new Error(`no action to commit`);
 			}
 
+			const contractActions = actions.map((v) => ({
+				position: xyToBigIntID(v.to.x, v.to.y),
+			}));
+
 			// TODO jolly-rogeR: type-safe via web3-connection type config (AccountData Management)
 			connection.provider.setNextMetadata({
 				type: 'reveal',
@@ -97,7 +101,7 @@
 			});
 			contracts.Dungeon.write({
 				functionName: 'resolve',
-				args: [account.address, secret, actions, '0x000000000000000000000000000000000000000000000000'],
+				args: [account.address, secret, contractActions, '0x000000000000000000000000000000000000000000000000'],
 				gas: force ? 1000000n : undefined,
 			});
 		});
@@ -115,6 +119,17 @@
 				{#if $offchainState.actions.length == 0}
 					<p>{timeToText($phase.timeLeftToCommit)} left</p>
 					<h2 class="card-title">Make your move</h2>
+					<button
+						class="btn btn-secondary"
+						on:click={() =>
+							$gameState.player
+								? camera.navigate(
+										$gameState.player.position.x * ROOM_SIZE,
+										$gameState.player.position.y * ROOM_SIZE,
+										0.5
+								  )
+								: undefined}>Center</button
+					>
 				{:else}
 					<p>{timeToText($phase.timeLeftToCommit)} left</p>
 
