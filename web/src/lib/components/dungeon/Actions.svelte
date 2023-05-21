@@ -1,10 +1,16 @@
 <script lang="ts">
 	import {controller, phase} from '$lib/game/Controller';
-	import {accountData} from '$lib/web3';
+	import {gameState} from '$lib/game/GameState';
+	import {accountData, execute} from '$lib/web3';
 	import type {CommitAction, OnChainAction} from '$lib/web3/account-data';
 	import {contracts} from '$lib/web3/viem';
 	import {fromCellActionsToRoomActions, xyToBigIntID, type RoomAction} from 'jolly-roger-common';
-	import {encodeAbiParameters, keccak256} from 'viem';
+	import {get} from 'svelte/store';
+	import {encodeAbiParameters, encodePacked, keccak256} from 'viem';
+	import {createExecutor, increaseBlockTime} from '$lib/utils/debug';
+	import {timeToText} from '$lib/utils/time';
+
+	const execute_increaseBlockTime = createExecutor(increaseBlockTime);
 
 	const offchainState = accountData.offchainState;
 
@@ -19,8 +25,13 @@
 			const actions = roomActions.map((v) => ({
 				position: xyToBigIntID(v.to.x, v.to.y),
 			}));
-			// TODO random
-			const secret = '0x0000000000000000000000000000000000000000000000000000000000000000';
+
+			// TODO use deterministic secret using private wallet:
+			// const secret = keccak256(['bytes32', 'bytes32'], [privateWallet.hashString(), epochHash]);
+			const secret = (`0x` +
+				[...crypto.getRandomValues(new Uint8Array(32))]
+					.map((m) => ('0' + m.toString(16)).slice(-2))
+					.join('')) as `0x${string}`;
 			const commitmentHash = keccak256(
 				encodeAbiParameters(
 					[
@@ -41,6 +52,7 @@
 
 			connection.provider.setNextMetadata({
 				type: 'commit',
+				epoch: get(gameState).epoch,
 				actions,
 				cellActions,
 				secret,
@@ -80,6 +92,7 @@
 			// TODO jolly-rogeR: type-safe via web3-connection type config (AccountData Management)
 			connection.provider.setNextMetadata({
 				type: 'reveal',
+				epoch: get(gameState).epoch,
 				commitTx: txHash,
 			});
 			contracts.Dungeon.write({
@@ -95,19 +108,53 @@
 <div
 	class={`fixed top-20 right-0 card w-96 ${actionsLeft <= 0 ? 'bg-red-500' : 'bg-neutral'} text-neutral-content m-1`}
 >
-	<!-- {$state.characters.length} characters -->
 	{#if $offchainState.actions.length > 0}
 		<div class="card-body items-center text-center">
 			{#if $phase.comitting}
-				<p>{$phase.timeLeftToCommit} seconds left</p>
-				<h2 class="card-title">Ready to Commit?</h2>
-				<p>You have {actionsLeft} actions left</p>
+				<p>{timeToText($phase.timeLeftToCommit)} left</p>
+
+				{#if $gameState.player?.committed}
+					<h2 class="card-title">Action Commited</h2>
+					<div class="card-actions justify-end">
+						{#if $execute_increaseBlockTime.error}
+							{$execute_increaseBlockTime.error}
+							<button class={`btn btn-error m-2`} on:click={() => execute_increaseBlockTime.acknowledgeError()}
+								>Ok</button
+							>
+						{:else}
+							<button
+								class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
+								on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToCommit)}
+								>Switch to Reveal Phase</button
+							>
+						{/if}
+						<!-- <button class="btn btn-primary" on:click={() => commit()}>Commit</button> -->
+						<!-- <button class="btn btn-ghost" on:click={() => reset()}>Reset</button> -->
+					</div>
+				{:else}
+					<h2 class="card-title">Ready to Commit?</h2>
+					<p>You have {actionsLeft} actions left</p>
+					<div class="card-actions justify-end">
+						<button class="btn btn-primary" on:click={() => commit()}>Commit</button>
+						<button class="btn btn-ghost" on:click={() => reset()}>Reset</button>
+					</div>
+				{/if}
+			{:else if $gameState.player?.revealed}
+				<h2 class="card-title">Action Revealed</h2>
 				<div class="card-actions justify-end">
-					<button class="btn btn-primary" on:click={() => commit()}>Commit</button>
-					<button class="btn btn-ghost" on:click={() => reset()}>Reset</button>
+					{#if $execute_increaseBlockTime.error}
+						{$execute_increaseBlockTime.error}
+						<button class={`btn btn-error m-2`} on:click={() => execute_increaseBlockTime.acknowledgeError()}>Ok</button
+						>
+					{:else}
+						<button
+							class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
+							on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToReveal)}>Switch to Commit Phase</button
+						>
+					{/if}
 				</div>
 			{:else}
-				<p>{$phase.timeLeftToReveal} seconds left</p>
+				<p>{timeToText($phase.timeLeftToReveal)} left</p>
 				<h2 class="card-title">Reveal your move!</h2>
 				<div class="card-actions justify-end">
 					<button class="btn btn-primary" on:click={() => reveal()}>Reveal</button>

@@ -33,6 +33,7 @@
     "jolly-roger-common": "workspace:*",
     "jolly-roger-indexer": "workspace:*",
     "named-logs": "^0.2.2",
+    "pretty-ms": "^8.0.0",
     "theme-change": "^2.5.0",
     "viem": "^0.3.31",
     "web3-connection": "^0.0.24",

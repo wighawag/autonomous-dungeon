@@ -3,7 +3,7 @@ import {MergedAbis, JSProcessor, fromJSProcessor} from 'ethereum-indexer-js-proc
 import contractsInfo from './contracts';
 
 export type Data = {
-	characters: {id: `0x${string}`; position: {x: number; y: number}; life: number}[];
+	characters: {id: `0x${string}`; position: {x: number; y: number}; life: number; revealed: boolean}[];
 	epoch: {
 		hash: `0x${string}`;
 		number: number;
@@ -22,8 +22,24 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 			},
 		};
 	},
+	onCommitmentMade(state, event) {
+		console.log(`onCommitmentMade`);
+		const {player: id} = event.args;
+		const findIndex = state.characters.findIndex((v) => v.id === id);
+
+		if (findIndex === -1) {
+			state.characters.push({
+				id: event.args.player,
+				position: {x: 0, y: 0}, // TODO
+				life: 1, // TODO
+				revealed: false,
+			});
+		} else {
+			state.characters[findIndex].revealed = false;
+		}
+	},
 	onStateUpdate(state, event) {
-		console.log({event, state});
+		console.log(`onStateUpdate`);
 		// TODO
 		// for now the id is the player
 		// but we need to change that
@@ -38,14 +54,17 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 				id: event.args.player,
 				position,
 				life: event.args.life,
+				revealed: true,
 			});
 		} else {
 			state.characters[findIndex].position = position;
 			state.characters[findIndex].life = event.args.life;
+			state.characters[findIndex].revealed = true;
 		}
 	},
 
 	onEpochHash(state, event) {
+		console.log(`onEpochHash`, event.args.epoch, event.args.epochHash);
 		state.epoch = {
 			hash: event.args.epochHash,
 			number: Number(event.args.epoch),

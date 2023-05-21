@@ -1,34 +1,15 @@
 <script lang="ts">
 	import {time} from '$lib/time';
-	import {devProvider} from '$lib/web3';
+	import {increaseBlockTime} from '$lib/utils/debug';
 
 	let error: any;
-	let state: undefined | 'setNextBlockTimestamp' | 'mine' | 'syncTime' | 'block';
+	let state: 'addTime' | undefined;
 
 	async function addTime(numHours: number) {
 		try {
-			const block = await devProvider?.request({
-				method: 'eth_getBlockByNumber',
-				params: ['latest', false],
-			});
-			if (!block) {
-				throw new Error(`no block can be fetched`);
-			}
-			const old_timestamp = parseInt(block.timestamp.slice(2), 16);
-			state = 'setNextBlockTimestamp';
-			await devProvider?.request({
-				method: 'evm_setNextBlockTimestamp',
-				params: [`0x` + BigInt(old_timestamp + numHours * 3600).toString(16)],
-			} as any);
-			state = 'mine';
-			await devProvider?.request({
-				method: 'evm_mine',
-				params: [],
-			} as any);
-			state = 'block';
-		} catch (err: any) {
-			console.error(err);
-			error = err;
+			state = 'addTime';
+			await increaseBlockTime(numHours * 3600);
+		} catch (err) {
 		} finally {
 			state = undefined;
 		}

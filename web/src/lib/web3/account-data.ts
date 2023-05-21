@@ -13,7 +13,7 @@ export type CommitAction = {
 };
 
 export type CommitMetadata = {
-	type: 'commit' | undefined; // TODO remove undefined
+	type: 'commit'; // TODO remove undefined
 	cellActions: CellAction[];
 	actions: CommitAction[];
 	secret: `0x${string}`;
@@ -21,15 +21,23 @@ export type CommitMetadata = {
 
 export type RevealMetadata = {
 	type: 'reveal';
+
 	commitTx: `0x${string}`;
 };
 
-export type DungeonTransaction = EIP1193TransactionWithMetadata & {
-	metadata: CommitMetadata | RevealMetadata;
+export type AnyMetadata = CommitMetadata | RevealMetadata;
+
+export type DungeonTransaction<T = AnyMetadata> = EIP1193TransactionWithMetadata & {
+	metadata: {
+		epoch: {
+			hash: `0x${string}`;
+			number: number;
+		};
+	} & T;
 };
 
-export type OnChainAction = {
-	tx: DungeonTransaction;
+export type OnChainAction<T = AnyMetadata> = {
+	tx: DungeonTransaction<T>;
 } & (
 	| {
 			inclusion: 'BeingFetched' | 'Broadcasted' | 'NotFound' | 'Cancelled';
