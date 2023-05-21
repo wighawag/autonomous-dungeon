@@ -27,8 +27,9 @@ contract Dungeon is Proxied {
         bytes24 furtherActions
     );
 
-    event StateUpdate(address indexed player, uint256 position, uint8 life);
-    event EpochHash(uint256 indexed epoch, bytes32 epochHash);
+    event PlayerUpdate(address indexed player, uint256 indexed position, uint8 life, uint256 gold, bytes32 equipment);
+    event RoomUpdate(uint256 indexed position, bytes32 goldBattle, bytes32 monsterBattle);
+    event EpochHashUpdate(uint256 indexed epoch, bytes32 epochHash);
 
     // ----------------------------------------------------------------------------------------------
     // TYPES
@@ -36,16 +37,24 @@ contract Dungeon is Proxied {
 
     struct Character {
         uint256 position;
+        uint256 gold;
         uint8 life;
+        bytes32 equipment;
     }
 
-    struct Monster {
-        uint8 life;
-    }
+    // this only track what changes
+    // when life is zero,
+    // gold and equiipment are considered taken
+    // uint256 gold;
+    // bytes32 equipment;
+
+    // struct Monster {
+    //     uint8 life;
+    // }
 
     struct RoomStatus {
-        Monster monsterStatus;
-        bool treasureTaken;
+        bytes32 goldBattle; // this represent a battle against other player with gold given to winner
+        bytes32 monsterBattle; // this represent a battle against a monster with loot shared (based on success? // or same/similar like goldBattle)
     }
 
     struct Commitment {
@@ -101,15 +110,15 @@ contract Dungeon is Proxied {
 
         _checkHash(commitment.hash, secret, actions, furtherActions);
 
-        uint256 currentPosition = characters[player].position;
-        Room memory currentRoom = computeRoom(roomHash(currentPosition));
+        Character memory character = characters[player];
+        Room memory currentRoom = computeRoom(roomHash(character.position));
 
         for (uint256 i = 0; i < actions.length; i++) {
             Action memory action = actions[i];
             Room memory newRoom = computeRoom(roomHash(action.position));
 
-            if (_isValidMove(currentPosition, currentRoom, action.position, newRoom)) {
-                currentPosition = action.position;
+            if (_isValidMove(character.position, currentRoom, action.position, newRoom)) {
+                character.position = action.position;
                 currentRoom = newRoom;
             } else {
                 // For now:
@@ -121,15 +130,18 @@ contract Dungeon is Proxied {
             }
         }
 
-        // we compute our epochHash as reveal are entered
-        // Note that later we might want to only use commitment who has gone deep enough in the dungeon
-        epochHash = secret ^ epochHash;
+        _handleCommitment(player, epoch, commitment, actions, furtherActions);
+        _handleEpochHash(epoch, secret);
+        _handleCharacter(player, character);
+    }
 
-        console.log("new epochHash");
-        console.logBytes32(epochHash);
-
-        characters[player].position = currentPosition;
-
+    function _handleCommitment(
+        address player,
+        uint32 epoch,
+        Commitment storage commitment,
+        Action[] memory actions,
+        bytes24 furtherActions
+    ) internal {
         bytes24 hashResolved = commitment.hash;
         if (furtherActions != bytes24(0)) {
             commitment.hash = furtherActions;
@@ -137,14 +149,23 @@ contract Dungeon is Proxied {
             commitment.epoch = 0; // used
         }
 
-        emit EpochHash(epoch + 1, epochHash);
-
         emit CommitmentResolved(player, epoch, hashResolved, actions, furtherActions);
+    }
+
+    function _handleEpochHash(uint32 epoch, bytes32 secret) internal {
+        // we compute our epochHash as reveal are entered
+        // Note that later we might want to only use commitment who has gone deep enough in the dungeon
+        epochHash = secret ^ epochHash;
+        emit EpochHashUpdate(epoch + 1, epochHash);
+    }
+
+    function _handleCharacter(address player, Character memory character) internal {
+        characters[player] = character;
 
         // CommitmentResolved event contains everything needed for an indexer to recompute the state
         // but here for simplicity we emit the latest data just computed
 
-        emit StateUpdate(player, currentPosition, characters[player].life);
+        emit PlayerUpdate(player, character.position, character.life, character.gold, character.equipment);
     }
 
     function getEpoch() public view returns (uint256) {
@@ -241,7 +262,7 @@ contract Dungeon is Proxied {
 
             // CommitmentVoid event contains everything needed for an indexer to recompute the state
             // but here for simplicity we emit the latest data just computed
-            emit StateUpdate(player, characters[player].position, 0);
+            emit PlayerUpdate(player, characters[player].position, 0, 0, bytes32(0));
         }
 
         require(commiting, "IN_RESOLUTION_PHASE");

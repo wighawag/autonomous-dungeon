@@ -17,7 +17,7 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 			characters: [],
 			epoch: {
 				// TODO
-				hash: getEpochHash(0),
+				hash: '0x0000000000000000000000000000000000000000000000000000000000000000',
 				number: 0,
 			},
 		};
@@ -38,7 +38,7 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 			state.characters[findIndex].revealed = false;
 		}
 	},
-	onStateUpdate(state, event) {
+	onPlayerUpdate(state, event) {
 		console.log(`onStateUpdate`);
 		// TODO
 		// for now the id is the player
@@ -63,7 +63,7 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 		}
 	},
 
-	onEpochHash(state, event) {
+	onEpochHashUpdate(state, event) {
 		console.log(`onEpochHash`, event.args.epoch, event.args.epochHash);
 		state.epoch = {
 			hash: event.args.epochHash,
