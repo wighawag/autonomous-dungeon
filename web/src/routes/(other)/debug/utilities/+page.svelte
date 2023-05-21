@@ -1,6 +1,7 @@
 <script lang="ts">
+	import Executor from '$lib/components/utilities/Executor.svelte';
 	import {time} from '$lib/time';
-	import {increaseBlockTime} from '$lib/utils/debug';
+	import {enableAnvilLogging, increaseBlockTime} from '$lib/utils/debug';
 
 	let error: any;
 	let state: 'addTime' | undefined;
@@ -39,3 +40,5 @@
 		>
 	</form>
 {/if}
+
+<Executor func={enableAnvilLogging}>Enable Anvil Logging</Executor>

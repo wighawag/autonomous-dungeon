@@ -23,6 +23,16 @@ export async function increaseBlockTime(numSeconds: number) {
 	} as any);
 }
 
+export async function enableAnvilLogging() {
+	if (!devProvider) {
+		throw new Error(`no dev provider`);
+	}
+	await devProvider.request({
+		method: 'anvil_setLoggingEnabled',
+		params: [true],
+	} as any);
+}
+
 // TODO move in promise utitilies
 export type Execution<T> = {executing: boolean; error?: any; result?: T};
 export function createExecutor<T, F extends (...args: any[]) => Promise<T>>(

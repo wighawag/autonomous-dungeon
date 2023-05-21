@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import "forge-deploy-proxy/ForgeDeploy_Proxied.sol";
 import "./Extraction.sol";
+import "forge-std/console.sol";
 
 contract Dungeon is Proxied {
     // ----------------------------------------------------------------------------------------------
@@ -106,19 +107,26 @@ contract Dungeon is Proxied {
         for (uint256 i = 0; i < actions.length; i++) {
             Action memory action = actions[i];
             Room memory newRoom = computeRoom(roomHash(action.position));
-            // if (_isValidMove(currentPosition, currentRoom, action.position, newRoom)) {
-            currentPosition = action.position;
-            currentRoom = newRoom;
-            // } else {
-            // we do not continue when we encounter an invalid move
-            // for simplicity, we still count was was computed so far
-            // break;
-            // }
+
+            if (_isValidMove(currentPosition, currentRoom, action.position, newRoom)) {
+                currentPosition = action.position;
+                currentRoom = newRoom;
+            } else {
+                // For now:
+                revert("invalid move");
+
+                // we do not continue when we encounter an invalid move
+                // for simplicity, we still count was was computed so far
+                break;
+            }
         }
 
         // we compute our epochHash as reveal are entered
         // Note that later we might want to only use commitment who has gone deep enough in the dungeon
         epochHash = secret ^ epochHash;
+
+        console.log("new epochHash");
+        console.logBytes32(epochHash);
 
         characters[player].position = currentPosition;
 
@@ -147,13 +155,14 @@ contract Dungeon is Proxied {
         return (block.timestamp - getEpoch() * TOTAL) < ACTION_period;
     }
 
-    function getEpochHash(uint256 epochToGenerate) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(epochToGenerate));
-    }
+    // we do not need this anymore, we use player generated epochHash
+    // function getEpochHash(uint256 epochToGenerate) public pure returns (bytes32) {
+    //     return keccak256(abi.encodePacked(epochToGenerate));
+    // }
 
-    function getEpochHash() public view returns (bytes32) {
-        return getEpochHash(getEpoch());
-    }
+    // function getEpochHash() public view returns (bytes32) {
+    //     return getEpochHash(getEpoch());
+    // }
 
     function roomID(int32 x, int32 y) public pure returns (uint256) {
         unchecked {
@@ -173,7 +182,7 @@ contract Dungeon is Proxied {
     }
 
     function roomHash(uint256 id) public view returns (bytes32) {
-        return keccak256(abi.encodePacked(getEpochHash(), id));
+        return keccak256(abi.encodePacked(epochHash, id));
     }
 
     function computeRoom(bytes32 roomHashData) public pure returns (Room memory) {
@@ -218,6 +227,9 @@ contract Dungeon is Proxied {
         Commitment storage commitment = commitments[player];
 
         (uint32 epoch, bool commiting) = _epoch();
+
+        console.log("epoch");
+        console.logUint(epoch);
 
         if (commitment.epoch != 0 && commitment.epoch != epoch) {
             // TODO make it count
@@ -268,16 +280,33 @@ contract Dungeon is Proxied {
 
     function _isValidMove(uint256 roomPosition, Room memory room, uint256 newPosition, Room memory newRoom)
         internal
-        pure
+        view // pure
         returns (bool)
     {
         (int32 x, int32 y) = roomCoords(roomPosition);
         (int32 nx, int32 ny) = roomCoords(newPosition);
         uint8 direction = _direction(x, y, nx, ny);
+        console.log("x");
+        console.logInt(x);
+        console.log("y");
+        console.logInt(y);
+        console.log("nx");
+        console.logInt(nx);
+        console.log("ny");
+        console.logInt(ny);
+        console.log("direction");
+        console.logUint(direction);
         if (direction == 4) {
             return false;
         }
-        return room.exits[direction] || newRoom.exits[direction + 2 % 4];
+        console.log("room.exits[direction]");
+        console.logBool(room.exits[direction]);
+        console.log("newRoom.exits[(direction + 2) % 4]");
+        console.log("oposite direction");
+        console.log("(direction + 2) % 4");
+        console.log((direction + 2) % 4);
+        console.logBool(newRoom.exits[(direction + 2) % 4]);
+        return room.exits[direction] || newRoom.exits[(direction + 2) % 4];
     }
 
     function _direction(int32 fromx, int32 fromy, int32 tox, int32 toy) internal pure returns (uint8) {

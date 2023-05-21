@@ -50,9 +50,9 @@ export const gameState: Readable<GameState> = derived(
 		}
 
 		const data: GameState = {
-			player: player
+			player: $account.address
 				? {
-						address: player.id,
+						address: $account.address,
 						cellPosition:
 							$offchainState.actions.length > 0
 								? $offchainState.actions[$offchainState.actions.length - 1].to
@@ -61,7 +61,7 @@ export const gameState: Readable<GameState> = derived(
 								: {cx: 0, cy: 0},
 						actions: $offchainState.actions,
 						committed: onchainActionForEpoch,
-						revealed: player.revealed,
+						revealed: player?.revealed || false,
 				  }
 				: undefined,
 			epoch: $pendingState.epoch,

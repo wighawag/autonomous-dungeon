@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {controller, phase} from '$lib/game/Controller';
 	import {gameState} from '$lib/game/GameState';
-	import {accountData, execute} from '$lib/web3';
+	import {accountData, devProvider, execute} from '$lib/web3';
 	import type {CommitAction, OnChainAction} from '$lib/web3/account-data';
 	import {contracts} from '$lib/web3/viem';
 	import {fromCellActionsToRoomActions, xyToBigIntID, type RoomAction} from 'jolly-roger-common';
@@ -64,7 +64,7 @@
 		});
 	}
 
-	function reveal() {
+	function reveal(force = false) {
 		contracts.execute(async ({contracts, connection, account}) => {
 			const onchainActions = accountData.$onchainActions;
 			let actionToCommit: OnChainAction | undefined;
@@ -98,6 +98,7 @@
 			contracts.Dungeon.write({
 				functionName: 'resolve',
 				args: [account.address, secret, actions, '0x000000000000000000000000000000000000000000000000'],
+				gas: force ? 1000000n : undefined,
 			});
 		});
 	}
@@ -158,6 +159,9 @@
 				<h2 class="card-title">Reveal your move!</h2>
 				<div class="card-actions justify-end">
 					<button class="btn btn-primary" on:click={() => reveal()}>Reveal</button>
+					{#if devProvider}
+						<button class="btn btn-error" on:click={() => reveal(true)}>Force Reveal</button>
+					{/if}
 				</div>
 			{/if}
 		</div>
