@@ -13,6 +13,12 @@
 	<ConnectButton />
 </div>
 
+<div class="fixed top-0 left-0 z-10">
+	{#if $gameState.playerCharacter}
+		<p>{$gameState.playerCharacter.life}</p>
+	{/if}
+</div>
+
 <Welcome />
 
 <Actions />

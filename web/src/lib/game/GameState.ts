@@ -3,7 +3,7 @@ import {account, accountData} from '$lib/web3';
 import type {CommitMetadata, OffchainState, OnChainAction, RevealMetadata} from '$lib/web3/account-data';
 import type {RoomAction, RoomPosition} from 'jolly-roger-common';
 // import type {CellAction, CellPosition} from 'jolly-roger-common';
-import type {Data} from 'jolly-roger-indexer';
+import type {Character, Data} from 'jolly-roger-indexer';
 import {derived, type Readable} from 'svelte/store';
 
 export type GameState = {
@@ -19,6 +19,7 @@ export type GameState = {
 				commited_from_past?: OnChainAction<CommitMetadata>;
 		  }
 		| undefined;
+	playerCharacter?: Character;
 	epoch: {
 		hash: `0x${string}`;
 		number: number;
@@ -33,10 +34,12 @@ export type GameState = {
 export const gameState: Readable<GameState> = derived(
 	[account, pendingState, accountData.offchainState, accountData.onchainActions],
 	([$account, $pendingState, $offchainState, $onchainActions]) => {
-		const player = $account.address
+		const playerCharacter = $account.address
 			? $pendingState.characters.find((v) => v.id.toLowerCase() === $account.address?.toLowerCase())
 			: undefined;
-		const characters = !player ? $pendingState.characters : $pendingState.characters.filter((v) => player.id !== v.id);
+		const characters = !playerCharacter
+			? $pendingState.characters
+			: $pendingState.characters.filter((v) => playerCharacter.id !== v.id);
 
 		let commitForEpoch: OnChainAction<CommitMetadata> | undefined;
 		let commitForBeforeRevealEpoch: OnChainAction<CommitMetadata> | undefined;
@@ -101,8 +104,8 @@ export const gameState: Readable<GameState> = derived(
 						position:
 							offchainState.actions.length > 0
 								? offchainState.actions[offchainState.actions.length - 1].to
-								: player
-								? player.position
+								: playerCharacter
+								? playerCharacter.position
 								: {x: 0, y: 0},
 						actions: offchainState.actions,
 						committed: commitForEpoch,
@@ -110,6 +113,7 @@ export const gameState: Readable<GameState> = derived(
 						commited_from_past: commitForBeforeRevealEpoch,
 				  }
 				: undefined,
+			playerCharacter,
 			epoch: $pendingState.epoch,
 			epochBeforeReveal: $pendingState.epochBeforeReveal,
 			characters,

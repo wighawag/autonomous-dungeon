@@ -102,6 +102,15 @@ contract Dungeon is Proxied {
     // ----------------------------------------------------------------------------------------------
 
     function makeCommitment(bytes24 commitmentHash) external {
+        Character memory character = characters[msg.sender];
+        if (character.position == 0) {
+            if (character.life == 0) {
+                // character.life = 3;
+            }
+            // _handleCharacter(msg.sender, character);
+        } else {
+            require(character.life > 0, "DEAD");
+        }
         _makeCommitment(msg.sender, commitmentHash);
     }
 
