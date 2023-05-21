@@ -174,7 +174,7 @@
 						>
 					{/if}
 				</div>
-			{:else}
+			{:else if $gameState.player?.past_commited}
 				<p>{timeToText($phase.timeLeftToReveal)} left</p>
 				<h2 class="card-title">Reveal your move!</h2>
 				<div class="card-actions justify-end">
@@ -183,6 +183,13 @@
 						<button class="btn btn-error" on:click={() => reveal(true)}>Force Reveal</button>
 					{/if}
 				</div>
+			{:else}
+				<p>{timeToText($phase.timeLeftToReveal)} left</p>
+				<h2 class="card-title">Wait Until The Resolution Phase ends</h2>
+				<button
+					class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
+					on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToReveal)}>Switch to Commit Phase</button
+				>
 			{/if}
 		</div>
 	{/if}

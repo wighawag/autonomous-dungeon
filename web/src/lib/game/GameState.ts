@@ -16,6 +16,7 @@ export type GameState = {
 				actions: RoomAction[];
 				committed?: OnChainAction<CommitMetadata>;
 				revealed: boolean;
+				past_commited: boolean;
 		  }
 		| undefined;
 	epoch: {
@@ -33,6 +34,7 @@ export const gameState: Readable<GameState> = derived(
 			: undefined;
 		const characters = !player ? $pendingState.characters : $pendingState.characters.filter((v) => player.id !== v.id);
 
+		let past_commited = false;
 		let onchainActionForEpoch: OnChainAction<CommitMetadata> | undefined;
 		for (const entry of Object.entries($onchainActions)) {
 			const txHash = entry[0];
@@ -49,6 +51,13 @@ export const gameState: Readable<GameState> = derived(
 					// TODO use nonce instead or block Number
 					onchainActionForEpoch = action as OnChainAction<CommitMetadata>; // TODO use type === commit for typescript check
 				}
+			} else if (
+				action.status === 'Success' &&
+				action.inclusion === 'Included' &&
+				action.tx.metadata.type === 'commit' &&
+				action.tx.metadata.epoch.number === $pendingState.epoch.number - 1
+			) {
+				past_commited = true;
 			}
 		}
 
@@ -73,6 +82,7 @@ export const gameState: Readable<GameState> = derived(
 						actions: offchainState.actions,
 						committed: onchainActionForEpoch,
 						revealed: player?.revealed || false,
+						past_commited,
 				  }
 				: undefined,
 			epoch: $pendingState.epoch,
