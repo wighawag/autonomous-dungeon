@@ -8,6 +8,10 @@ export type Data = {
 		hash: `0x${string}`;
 		number: number;
 	};
+	epochBeforeReveal: {
+		hash: `0x${string}`;
+		number: number;
+	};
 };
 
 const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.contracts>, Data> = {
@@ -17,6 +21,10 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 			characters: [],
 			epoch: {
 				// TODO use an event ? or a constructor arg ?
+				hash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+				number: 0,
+			},
+			epochBeforeReveal: {
 				hash: '0x0000000000000000000000000000000000000000000000000000000000000000',
 				number: 0,
 			},
@@ -36,6 +44,13 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 			});
 		} else {
 			state.characters[findIndex].revealed = false;
+		}
+
+		if (state.epochBeforeReveal.number !== state.epoch.number) {
+			state.epochBeforeReveal = {
+				hash: state.epoch.hash,
+				number: state.epoch.number,
+			};
 		}
 	},
 	onPlayerUpdate(state, event) {

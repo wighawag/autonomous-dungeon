@@ -11,7 +11,7 @@ contract Dungeon is Proxied {
     // ----------------------------------------------------------------------------------------------
 
     uint256 constant TOTAL = 24 * 3600;
-    uint256 constant ACTION_period = 23 * 3600;
+    uint256 constant ACTION_PERIOD = 23 * 3600;
     uint256 constant START_TIMESTAMP = 0;
 
     // ----------------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ contract Dungeon is Proxied {
     event EpochHashUpdate(uint256 indexed epoch, bytes32 epochHash);
 
     // ----------------------------------------------------------------------------------------------
-    // TYPES
+    // STORAGE TYPES
     // ----------------------------------------------------------------------------------------------
 
     struct Character {
@@ -41,16 +41,6 @@ contract Dungeon is Proxied {
         uint8 life;
         bytes32 equipment;
     }
-
-    // this only track what changes
-    // when life is zero,
-    // gold and equiipment are considered taken
-    // uint256 gold;
-    // bytes32 equipment;
-
-    // struct Monster {
-    //     uint8 life;
-    // }
 
     struct RoomStatus {
         bytes32 goldBattle; // this represent a battle against other player with gold given to winner
@@ -62,6 +52,20 @@ contract Dungeon is Proxied {
         uint32 epoch;
     }
 
+    // ----------------------------------------------------------------------------------------------
+    // MEMORY ONLY TYPES
+    // ----------------------------------------------------------------------------------------------
+
+    // this only track what changes
+    // when life is zero,
+    // gold and equiipment are considered taken
+    // uint256 gold;
+    // bytes32 equipment;
+
+    // struct Monster {
+    //     uint8 life;
+    // }
+
     struct Action {
         uint256 position; // TODO uint64
     }
@@ -72,16 +76,16 @@ contract Dungeon is Proxied {
         bool monster;
     }
 
+    // ----------------------------------------------------------------------------------------------
+    // STORAGE
+    // ----------------------------------------------------------------------------------------------
+
     mapping(uint256 => RoomStatus) public roomStatus;
     mapping(address => Character) public characters;
     mapping(address => Commitment) public commitments;
 
     bytes32 internal epochHash_0;
     bytes32 internal epochHash_1;
-
-    // ----------------------------------------------------------------------------------------------
-    // STORAGE
-    // ----------------------------------------------------------------------------------------------
 
     // ----------------------------------------------------------------------------------------------
     // CONSTRUCTOR / INITIALIZER
@@ -127,6 +131,7 @@ contract Dungeon is Proxied {
 
                 // we do not continue when we encounter an invalid move
                 // for simplicity, we still count was was computed so far
+                // TODO alternative: revert the whole moves but keep the commitment
                 break;
             }
         }
@@ -157,22 +162,10 @@ contract Dungeon is Proxied {
         // we compute our epochHash as reveal are entered
         // Note that later we might want to only use commitment who has gone deep enough in the dungeon
         if (epoch % 2 == 0) {
-            console.log("epoch % 2 == 0, we modify epochHash_1");
-            console.logUint(epoch);
-            console.log("before");
-            console.logBytes32(epochHash_1);
             epochHash_1 = secret ^ epochHash_1;
-            console.log("after");
-            console.logBytes32(epochHash_1);
             emit EpochHashUpdate(epoch + 1, epochHash_1);
         } else {
-            console.log("epoch % 2 == 1, we modify epochHash_0");
-            console.logUint(epoch);
-            console.log("before");
-            console.logBytes32(epochHash_0);
             epochHash_0 = secret ^ epochHash_0;
-            console.log("after");
-            console.logBytes32(epochHash_0);
             emit EpochHashUpdate(epoch + 1, epochHash_0);
         }
     }
@@ -204,20 +197,7 @@ contract Dungeon is Proxied {
     }
 
     function roomHash(uint32 epoch, uint256 id) public view returns (bytes32) {
-        // uint32 epoch = getEpoch();
         bytes32 epochHash = epoch % 2 == 0 ? epochHash_0 : epochHash_1;
-
-        // console.log("epoch");
-        // console.logUint(epoch);
-        // console.log("epoch % 2 == 0");
-        // console.logBool(epoch % 2 == 0);
-        // console.log("epoch % 2 == 0 ? epochHash_0 : epochHash_1");
-        // console.logBytes32(epoch % 2 == 0 ? epochHash_0 : epochHash_1);
-        // console.log("epochHash_0");
-        // console.logBytes32(epochHash_0);
-        // console.log("epochHash_1");
-        // console.logBytes32(epochHash_1);
-
         return keccak256(abi.encodePacked(epochHash, id));
     }
 
@@ -267,9 +247,11 @@ contract Dungeon is Proxied {
         console.log("epoch");
         console.logUint(epoch);
 
+        // TODO extract this into a separate function that can also be called by anyone (past the corresponding reveal phase)
+        //  Would be used to claim the gold, equipment, etc...
         if (commitment.epoch != 0 && commitment.epoch != epoch) {
-            // TODO make it count
-            // if we set to zero life, then we should make it a separate tx, for anyone to claim ? instea do inside this if statement
+            // actually why would the player call `makeCommitment` if its character cannot even move
+            // This also lead us to talk about character and player association
             characters[msg.sender].life = 0;
             commitment.epoch = 0;
 
@@ -277,7 +259,13 @@ contract Dungeon is Proxied {
 
             // CommitmentVoid event contains everything needed for an indexer to recompute the state
             // but here for simplicity we emit the latest data just computed
-            emit PlayerUpdate(player, characters[player].position, 0, 0, bytes32(0));
+            emit PlayerUpdate(
+                player,
+                characters[player].position,
+                characters[player].life,
+                characters[player].gold,
+                characters[player].equipment
+            );
         }
 
         require(commiting, "IN_RESOLUTION_PHASE");
@@ -311,7 +299,7 @@ contract Dungeon is Proxied {
 
         uint256 timePassed = block.timestamp - START_TIMESTAMP;
         epoch = uint32((timePassed / epochDuration) + 1);
-        commiting = timePassed - ((epoch - 1) * epochDuration) < ACTION_period;
+        commiting = timePassed - ((epoch - 1) * epochDuration) < ACTION_PERIOD;
     }
 
     function _isValidMove(uint256 roomPosition, Room memory room, uint256 newPosition, Room memory newRoom)
@@ -322,26 +310,9 @@ contract Dungeon is Proxied {
         (int32 x, int32 y) = roomCoords(roomPosition);
         (int32 nx, int32 ny) = roomCoords(newPosition);
         uint8 direction = _direction(x, y, nx, ny);
-        console.log("x");
-        console.logInt(x);
-        console.log("y");
-        console.logInt(y);
-        console.log("nx");
-        console.logInt(nx);
-        console.log("ny");
-        console.logInt(ny);
-        console.log("direction");
-        console.logUint(direction);
         if (direction == 4) {
             return false;
         }
-        console.log("room.exits[direction]");
-        console.logBool(room.exits[direction]);
-        console.log("newRoom.exits[(direction + 2) % 4]");
-        console.log("oposite direction");
-        console.log("(direction + 2) % 4");
-        console.log((direction + 2) % 4);
-        console.logBool(newRoom.exits[(direction + 2) % 4]);
         return room.exits[direction] || newRoom.exits[(direction + 2) % 4];
     }
 

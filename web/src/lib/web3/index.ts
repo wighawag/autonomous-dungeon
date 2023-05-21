@@ -22,10 +22,10 @@ const stores = init({
 	autoConnectUsingPrevious: true,
 	options: [
 		'builtin',
-		new WalletConnectModuleLoader({
-			projectId: '355ea1b63e40657f5b5ce459292375bd',
-			chains: [initialContractsInfos.chainId].map((v) => parseInt(v)),
-		}),
+		// new WalletConnectModuleLoader({
+		// 	projectId: '355ea1b63e40657f5b5ce459292375bd',
+		// 	chains: [initialContractsInfos.chainId].map((v) => parseInt(v)),
+		// }),
 	],
 	parameters: {
 		blockTime: blockTime || 5,

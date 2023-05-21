@@ -2,7 +2,7 @@ import {logs} from 'named-logs';
 // import {type CellPosition, type CellAction, generateEpoch, cellPositionFrom, getEpochHash} from 'jolly-roger-common';
 
 import {accountData} from '$lib/web3';
-import {derived, writable} from 'svelte/store';
+import {derived, get, writable} from 'svelte/store';
 import {time} from '$lib/time';
 import {gameState, type GameState} from './GameState';
 import {generateEpoch, getEpochHash, roomPositionFrom, type RoomPosition} from 'jolly-roger-common';
@@ -26,8 +26,10 @@ export function initController() {
 		const currentHash = $gameState.epoch.hash;
 		if (currentHash !== $dungeon.epoch.hash) {
 			$dungeon = generateEpoch(currentHash);
-			accountData.offchainState.reset();
 			dungeon.set($dungeon);
+		}
+		if (accountData.$offchainState.epoch?.hash && accountData.$offchainState.epoch?.hash != currentHash) {
+			accountData.offchainState.reset();
 		}
 	});
 	// function move(to: CellPosition) {
@@ -64,30 +66,38 @@ export function initController() {
 	}
 
 	function getEpoch(time: number) {
-		return Math.floor((time - START_TIMESTAMP) / TOTAL);
+		const totalTimePassed = time - START_TIMESTAMP;
+		const epoch = Math.floor(totalTimePassed / TOTAL + 1);
+		return epoch;
 	}
 
 	if (typeof document !== 'undefined') {
-		window.addEventListener('keydown', (ev) => {
-			logger.info(ev);
-			if (!$gameState) {
-				throw new Error(`Game not initialised`);
-			}
-			if (!$gameState.player) {
-				throw new Error(`No player`);
-			}
-			if (ev.key === 'ArrowLeft' || ev.key === 'Left' || ev.key === 'a') {
-				move(roomPositionFrom($gameState.player.position, -1, 0));
-			} else if (ev.key === 'ArrowUp' || ev.key === 'Up' || ev.key === 'w') {
-				move(roomPositionFrom($gameState.player.position, 0, -1));
-			} else if (ev.key === 'ArrowDown' || ev.key === 'Down' || ev.key === 's') {
-				move(roomPositionFrom($gameState.player.position, 0, 1));
-			} else if (ev.key === 'ArrowRight' || ev.key === 'Right' || ev.key === 'd') {
-				move(roomPositionFrom($gameState.player.position, 1, 0));
-			} else if (ev.key === 'Backspace') {
-				back();
-			}
-		});
+		const windowAsAny = window as any;
+		if (!windowAsAny._controllerAttached) {
+			windowAsAny._controllerAttached = true;
+			window.addEventListener('keydown', (ev) => {
+				if (get(phase).comitting) {
+					logger.info(ev);
+					if (!$gameState) {
+						throw new Error(`Game not initialised`);
+					}
+					if (!$gameState.player) {
+						throw new Error(`No player`);
+					}
+					if (ev.key === 'ArrowLeft' || ev.key === 'Left' || ev.key === 'a') {
+						move(roomPositionFrom($gameState.player.position, -1, 0));
+					} else if (ev.key === 'ArrowUp' || ev.key === 'Up' || ev.key === 'w') {
+						move(roomPositionFrom($gameState.player.position, 0, -1));
+					} else if (ev.key === 'ArrowDown' || ev.key === 'Down' || ev.key === 's') {
+						move(roomPositionFrom($gameState.player.position, 0, 1));
+					} else if (ev.key === 'ArrowRight' || ev.key === 'Right' || ev.key === 'd') {
+						move(roomPositionFrom($gameState.player.position, 1, 0));
+					} else if (ev.key === 'Backspace') {
+						back();
+					}
+				}
+			});
+		}
 	}
 
 	function onRoomClicked(x: number, y: number, cx: number, cy: number) {
@@ -112,10 +122,11 @@ export function initController() {
 export const controller = initController();
 
 export const phase = derived(time, ($time) => {
-	const epoch = Math.floor(($time - START_TIMESTAMP) / TOTAL);
-	const epochStartTime = epoch * TOTAL;
-	const timePassed = $time - epochStartTime;
-	const isActionPhase = timePassed < ACTION_PERIOD;
+	const totalTimePassed = $time.timestamp - START_TIMESTAMP;
+	const epoch = Math.floor(totalTimePassed / TOTAL + 1);
+	const epochStartTime = (epoch - 1) * TOTAL;
+	const timePassed = $time.timestamp - epochStartTime;
+	const isActionPhase = $time.synced && timePassed < ACTION_PERIOD;
 	const timeLeftToCommit = ACTION_PERIOD - timePassed;
 	const timeLeftToReveal = isActionPhase ? -1 : TOTAL - timePassed;
 	const timeLeftToEpochEnd = TOTAL - timePassed;

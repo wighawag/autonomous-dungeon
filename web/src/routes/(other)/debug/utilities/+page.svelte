@@ -16,7 +16,7 @@
 		}
 	}
 
-	$: date = new Date($time * 1000);
+	$: date = new Date($time.timestamp * 1000);
 
 	let hours = 1;
 </script>

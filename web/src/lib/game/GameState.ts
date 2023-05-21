@@ -1,6 +1,6 @@
 import {pendingState} from '$lib/blockchain/state/PendingState';
 import {account, accountData} from '$lib/web3';
-import type {CommitMetadata, OffchainState, OnChainAction} from '$lib/web3/account-data';
+import type {CommitMetadata, OffchainState, OnChainAction, RevealMetadata} from '$lib/web3/account-data';
 import type {RoomAction, RoomPosition} from 'jolly-roger-common';
 // import type {CellAction, CellPosition} from 'jolly-roger-common';
 import type {Data} from 'jolly-roger-indexer';
@@ -15,11 +15,15 @@ export type GameState = {
 				position: RoomPosition;
 				actions: RoomAction[];
 				committed?: OnChainAction<CommitMetadata>;
-				revealed: boolean;
-				past_commited: boolean;
+				revealed?: OnChainAction<RevealMetadata>;
+				commited_from_past?: OnChainAction<CommitMetadata>;
 		  }
 		| undefined;
 	epoch: {
+		hash: `0x${string}`;
+		number: number;
+	};
+	epochBeforeReveal: {
 		hash: `0x${string}`;
 		number: number;
 	};
@@ -34,30 +38,51 @@ export const gameState: Readable<GameState> = derived(
 			: undefined;
 		const characters = !player ? $pendingState.characters : $pendingState.characters.filter((v) => player.id !== v.id);
 
-		let past_commited = false;
-		let onchainActionForEpoch: OnChainAction<CommitMetadata> | undefined;
+		let commitForEpoch: OnChainAction<CommitMetadata> | undefined;
+		let commitForBeforeRevealEpoch: OnChainAction<CommitMetadata> | undefined;
+		let revealForEpoch: OnChainAction<RevealMetadata> | undefined;
+
 		for (const entry of Object.entries($onchainActions)) {
 			const txHash = entry[0];
 			const action = entry[1];
-			if (
-				action.status === 'Success' &&
-				action.inclusion === 'Included' &&
-				action.tx.metadata.type === 'commit' &&
-				action.tx.metadata.epoch.hash === $pendingState.epoch.hash &&
-				action.tx.metadata.epoch.number === $pendingState.epoch.number
-			) {
-				if (!onchainActionForEpoch || onchainActionForEpoch.tx.timestamp < action.tx.timestamp) {
-					// we use the latest
-					// TODO use nonce instead or block Number
-					onchainActionForEpoch = action as OnChainAction<CommitMetadata>; // TODO use type === commit for typescript check
+			if (action.tx.metadata.type === 'commit') {
+				if (
+					action.status === 'Success' &&
+					action.inclusion === 'Included' &&
+					action.tx.metadata.epoch.hash === $pendingState.epoch.hash &&
+					action.tx.metadata.epoch.number === $pendingState.epoch.number
+				) {
+					if (!commitForEpoch || commitForEpoch.tx.timestamp < action.tx.timestamp) {
+						// we use the latest
+						// TODO use nonce instead or block Number
+						commitForEpoch = action as OnChainAction<CommitMetadata>; // TODO use type === "commit for typescript check
+					}
 				}
-			} else if (
-				action.status === 'Success' &&
-				action.inclusion === 'Included' &&
-				action.tx.metadata.type === 'commit' &&
-				action.tx.metadata.epoch.number === $pendingState.epoch.number - 1
-			) {
-				past_commited = true;
+				if (
+					action.status === 'Success' &&
+					action.inclusion === 'Included' &&
+					action.tx.metadata.epoch.hash === $pendingState.epochBeforeReveal.hash &&
+					action.tx.metadata.epoch.number === $pendingState.epochBeforeReveal.number
+				) {
+					if (!commitForBeforeRevealEpoch || commitForBeforeRevealEpoch.tx.timestamp < action.tx.timestamp) {
+						// we use the latest
+						// TODO use nonce instead or block Number
+						commitForBeforeRevealEpoch = action as OnChainAction<CommitMetadata>; // TODO use type === "commit for typescript check
+					}
+				}
+			} else if (action.tx.metadata.type === 'reveal') {
+				if (
+					action.status === 'Success' &&
+					action.inclusion === 'Included' &&
+					action.tx.metadata.epoch.hash === $pendingState.epochBeforeReveal.hash &&
+					action.tx.metadata.epoch.number === $pendingState.epochBeforeReveal.number
+				) {
+					if (!revealForEpoch || revealForEpoch.tx.timestamp < action.tx.timestamp) {
+						// we use the latest
+						// TODO use nonce instead or block Number
+						revealForEpoch = action as OnChainAction<RevealMetadata>; // TODO use type === "reveal" for typescript check
+					}
+				}
 			}
 		}
 
@@ -80,12 +105,13 @@ export const gameState: Readable<GameState> = derived(
 								? player.position
 								: {x: 0, y: 0},
 						actions: offchainState.actions,
-						committed: onchainActionForEpoch,
-						revealed: player?.revealed || false,
-						past_commited,
+						committed: commitForEpoch,
+						revealed: revealForEpoch,
+						commited_from_past: commitForBeforeRevealEpoch,
 				  }
 				: undefined,
 			epoch: $pendingState.epoch,
+			epochBeforeReveal: $pendingState.epochBeforeReveal,
 			characters,
 		};
 

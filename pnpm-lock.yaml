@@ -126,6 +126,9 @@ importers:
 
   web:
     dependencies:
+      '@types/lodash':
+        specifier: ^4.14.194
+        version: 4.14.194
       ethereum-indexer-browser:
         specifier: ^0.6.5
         version: 0.6.5(typescript@5.0.4)
@@ -135,6 +138,9 @@ importers:
       jolly-roger-indexer:
         specifier: workspace:*
         version: link:../indexer
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       named-logs:
         specifier: ^0.2.2
         version: 0.2.2
@@ -148,8 +154,8 @@ importers:
         specifier: ^0.3.31
         version: 0.3.31(typescript@5.0.4)
       web3-connection:
-        specifier: ^0.0.26
-        version: 0.0.26(svelte@3.59.1)
+        specifier: ^0.0.27
+        version: 0.0.27(svelte@3.59.1)
       web3w-walletconnect-loader:
         specifier: ^0.4.3
         version: 0.4.3
@@ -1455,6 +1461,10 @@ packages:
     dependencies:
       '@types/node': 20.1.2
     dev: true
+
+  /@types/lodash@4.14.194:
+    resolution: {integrity: sha512-r22s9tAS7imvBt2lyHC9B8AGwWnXaYb1tY09oyLkXDs4vArpYJzw09nj8MLx5VfciBPGIb+ZwG0ssYnEPJxn/g==}
+    dev: false
 
   /@types/lru-cache@5.1.1:
     resolution: {integrity: sha512-ssE3Vlrys7sdIzs5LOxCzTVMsU7i9oa/IaW92wF32JFb3CVczqOkru2xspuKczHEbG3nvmPY7IFqVmGGHdNbYw==}
@@ -4502,7 +4512,6 @@ packages:
 
   /lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
-    dev: true
 
   /log-symbols@4.1.0:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
@@ -7043,8 +7052,8 @@ packages:
     engines: {node: '>= 8'}
     dev: true
 
-  /web3-connection@0.0.26(svelte@3.59.1):
-    resolution: {integrity: sha512-lU/L1RUj64ZQY+OplcTXH9Drt6KHb/Zs0KdLuv4sqbg8gentIAOD5695ofbCkm0a+vYGzJtBIP8Fs9EgrpkewQ==}
+  /web3-connection@0.0.27(svelte@3.59.1):
+    resolution: {integrity: sha512-7Ehsi2/lDWFOPf2hetbv3jTX2ZOdGSGwkk1tTCbZ2y9drDMCJz0ogoATSz/FbQSus7Ve4asXHlvucVI8XZxwdQ==}
     peerDependencies:
       svelte: ^3.54.0
     dependencies:

@@ -21,7 +21,7 @@ function drawWalls(ctx: CanvasRenderingContext2D, room: Room, cx: number, cy: nu
 	const top = cy - ROOM_SIZE / 2;
 	const right = cx + ROOM_SIZE / 2;
 	const bottom = cy + ROOM_SIZE / 2;
-	ctx.fillText(`${room.x},${room.y}`, left, top);
+	// ctx.fillText(`${room.x},${room.y}`, left, top);
 	// north ctx.fillRect(left, top, ROOM_SIZE, WALL_STROKE_SIZE);
 	ctx.fillRect(left, top, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
 	if (!room.exits[0]) {

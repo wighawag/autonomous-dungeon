@@ -96,7 +96,7 @@
 			// TODO jolly-rogeR: type-safe via web3-connection type config (AccountData Management)
 			connection.provider.setNextMetadata({
 				type: 'reveal',
-				epoch: get(gameState).epoch,
+				epoch: get(gameState).epochBeforeReveal,
 				commitTx: txHash,
 			});
 			contracts.Dungeon.write({
@@ -135,6 +135,7 @@
 
 					{#if $gameState.player?.committed}
 						<h2 class="card-title">Action Commited</h2>
+						<p>Please wait for the reveal phase</p>
 						<div class="card-actions justify-end">
 							{#if $execute_increaseBlockTime.error}
 								{$execute_increaseBlockTime.error}
@@ -163,6 +164,7 @@
 			{:else if $gameState.player?.revealed}
 				<h2 class="card-title">Action Revealed</h2>
 				<div class="card-actions justify-end">
+					<p>Please wait for the next epoch and see the results of all player's actions!</p>
 					{#if $execute_increaseBlockTime.error}
 						{$execute_increaseBlockTime.error}
 						<button class={`btn btn-error m-2`} on:click={() => execute_increaseBlockTime.acknowledgeError()}>Ok</button
@@ -174,7 +176,7 @@
 						>
 					{/if}
 				</div>
-			{:else if $gameState.player?.past_commited}
+			{:else if $gameState.player?.commited_from_past && !$gameState.player?.revealed}
 				<p>{timeToText($phase.timeLeftToReveal)} left</p>
 				<h2 class="card-title">Reveal your move!</h2>
 				<div class="card-actions justify-end">
