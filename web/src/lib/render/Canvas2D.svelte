@@ -2,8 +2,10 @@
 	import {onMount} from 'svelte';
 	import {Camera} from './camera';
 	import {WebGLRenderer} from './Renderer2D';
+	import type {GameState} from '$lib/game/GameState';
+	import type {Readable} from 'svelte/store';
 
-	export let state: any; // TODO
+	export let gameState: Readable<GameState>;
 	let renderer: WebGLRenderer = new WebGLRenderer();
 	let camera: Camera;
 	function render(time: number) {
@@ -31,9 +33,9 @@
 		// 	actionHandler.onCell(Math.floor(x), Math.floor(y));
 		// };
 
-		// state.subscribe(($state) => {
-		// 	renderer.updateState($state);
-		// });
+		gameState.subscribe(($gameState) => {
+			renderer.updateState($gameState);
+		});
 
 		requestAnimationFrame(render);
 	});

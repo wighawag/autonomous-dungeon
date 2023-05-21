@@ -247,3 +247,7 @@ export function cellPositionFrom(position: CellPosition, x: 0 | -1 | 1, y: 0 | -
 		cy: position.cy + y,
 	};
 }
+
+export function getEpochHash(epochToGenerate: number) {
+	return keccak256(encodePacked(['uint256'], [BigInt(epochToGenerate)]));
+}

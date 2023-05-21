@@ -1,10 +1,10 @@
 import {logs} from 'named-logs';
-import {type CellPosition, type CellAction, generateEpoch, cellPositionFrom} from 'jolly-roger-common';
-import {encodePacked, keccak256} from 'viem';
+import {type CellPosition, type CellAction, generateEpoch, cellPositionFrom, getEpochHash} from 'jolly-roger-common';
+
 import {accountData} from '$lib/web3';
 import {derived, writable} from 'svelte/store';
 import {time} from '$lib/time';
-import {state} from './State';
+import {gameState, type GameState} from './GameState';
 
 const logger = logs('controller');
 
@@ -18,23 +18,25 @@ export function initController() {
 	let $dungeon = generateEpoch(getEpochHash(0));
 	const dungeon = writable($dungeon);
 
-	state.subscribe((v) => {
-		// if (v)
-		// TODO update epochHash
-	});
-	//for now it is based on time
-	time.subscribe((v) => {
-		const currentHash = getEpochHash(getEpoch(v));
+	let $gameState: GameState | undefined;
+	gameState.subscribe((v) => {
+		$gameState = v;
+		const currentHash = $gameState.epoch.hash;
 		if (currentHash !== $dungeon.epoch.hash) {
 			$dungeon = generateEpoch(currentHash);
 			dungeon.set($dungeon);
 		}
 	});
-
 	function move(to: CellPosition) {
+		if (!$gameState) {
+			throw new Error(`Game not initialised`);
+		}
+		if (!$gameState.player) {
+			throw new Error(`No player`);
+		}
 		const $state = accountData.$offchainState;
-		if ($state.actions.length < 64 && $dungeon.isValidCellMove($state.position, to)) {
-			accountData.offchainState.move($dungeon.epoch, to);
+		if ($state.actions.length < 64 && $dungeon.isValidCellMove($gameState.player.cellPosition, to)) {
+			accountData.offchainState.move($gameState.epoch, $gameState.player.cellPosition, to);
 		}
 	}
 
@@ -50,22 +52,23 @@ export function initController() {
 		return Math.floor((time - START_TIMESTAMP) / TOTAL);
 	}
 
-	function getEpochHash(epochToGenerate: number) {
-		return keccak256(encodePacked(['uint256'], [BigInt(epochToGenerate)]));
-	}
-
 	if (typeof document !== 'undefined') {
 		window.addEventListener('keydown', (ev) => {
 			logger.info(ev);
-			const $state = accountData.$offchainState;
+			if (!$gameState) {
+				throw new Error(`Game not initialised`);
+			}
+			if (!$gameState.player) {
+				throw new Error(`No player`);
+			}
 			if (ev.key === 'ArrowLeft' || ev.key === 'Left' || ev.key === 'a') {
-				move(cellPositionFrom($state.position, -1, 0));
+				move(cellPositionFrom($gameState.player.cellPosition, -1, 0));
 			} else if (ev.key === 'ArrowUp' || ev.key === 'Up' || ev.key === 'w') {
-				move(cellPositionFrom($state.position, 0, -1));
+				move(cellPositionFrom($gameState.player.cellPosition, 0, -1));
 			} else if (ev.key === 'ArrowDown' || ev.key === 'Down' || ev.key === 's') {
-				move(cellPositionFrom($state.position, 0, 1));
+				move(cellPositionFrom($gameState.player.cellPosition, 0, 1));
 			} else if (ev.key === 'ArrowRight' || ev.key === 'Right' || ev.key === 'd') {
-				move(cellPositionFrom($state.position, 1, 0));
+				move(cellPositionFrom($gameState.player.cellPosition, 1, 0));
 			} else if (ev.key === 'Backspace') {
 				back();
 			}

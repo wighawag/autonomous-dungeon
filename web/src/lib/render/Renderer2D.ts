@@ -1,11 +1,10 @@
 import {writable, type Readable, type Subscriber, type Unsubscriber, type Writable} from 'svelte/store';
 import type {CameraState} from './camera';
 import type {RenderViewState} from './renderview';
-import {account, accountData} from '$lib/web3';
 import {Blockie} from '$lib/utils/eth/blockie';
 import type {Room} from 'jolly-roger-common';
-import {controller} from '$lib/blockchain/state/Controller';
-import {state} from '$lib/blockchain/state/State';
+import {controller} from '$lib/game/Controller';
+import type {GameState} from '$lib/game/GameState';
 
 const CELL_SIZE = 50;
 const ROOM_CELL_SIZE = 3;
@@ -22,7 +21,7 @@ function drawWalls(ctx: CanvasRenderingContext2D, room: Room, cx: number, cy: nu
 	const top = cy - ROOM_SIZE / 2;
 	const right = cx + ROOM_SIZE / 2;
 	const bottom = cy + ROOM_SIZE / 2;
-	// ctx.fillText(`${room.x},${room.y}`, left, top);
+	ctx.fillText(`${room.x},${room.y}`, left, top);
 	// north ctx.fillRect(left, top, ROOM_SIZE, WALL_STROKE_SIZE);
 	ctx.fillRect(left, top, DOOR_SIDE_WALL_SIZE, WALL_STROKE_SIZE);
 	if (!room.exits[0]) {
@@ -53,7 +52,7 @@ function drawWalls(ctx: CanvasRenderingContext2D, room: Room, cx: number, cy: nu
 }
 
 export class WebGLRenderer implements Readable<RenderViewState> {
-	// private state: Data;
+	private $gameState: GameState | undefined;
 	private canvas!: HTMLCanvasElement;
 	private ctx!: CanvasRenderingContext2D;
 	private store: Writable<RenderViewState>;
@@ -66,9 +65,9 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 	subscribe(run: Subscriber<RenderViewState>, invalidate?: (value?: RenderViewState) => void): Unsubscriber {
 		return this.store.subscribe(run, invalidate);
 	}
-	// updateState(state: Data) {
-	// 	this.state = state;
-	// }
+	updateState(gameState: GameState) {
+		this.$gameState = gameState;
+	}
 
 	updateView(cameraState: CameraState) {
 		this.cameraState = cameraState;
@@ -151,59 +150,64 @@ export class WebGLRenderer implements Readable<RenderViewState> {
 			}
 		}
 
-		const $state = accountData.$offchainState;
-		const character = $state.position;
-		const characterRoom = {
-			x: Math.floor(($state.position.cx + 1) / 3),
-			y: Math.floor(($state.position.cy + 1) / 3),
-		};
-		ctx.fillStyle = 'white';
-		ctx.strokeStyle = 'white';
-		const cx = characterRoom.x * ROOM_SIZE;
-		const cy = characterRoom.y * ROOM_SIZE;
-		// drawWalls(ctx, getRoomFromCell(character.cx, character.cy), cx, cy);
-		for (let suby = -1; suby <= 1; suby++) {
-			for (let subx = -1; subx <= 1; subx++) {
-				// ctx.fillText('-', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
-				// ctx.fillText('.', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
-				ctx.strokeRect(cx + subx * CELL_SIZE, cy + suby * CELL_SIZE, 3, 3);
+		const player = this.$gameState?.player;
+		const playerRoom = player
+			? {
+					x: Math.floor((player.cellPosition.cx + 1) / 3),
+					y: Math.floor((player.cellPosition.cy + 1) / 3),
+			  }
+			: undefined;
+		if (player && playerRoom) {
+			ctx.fillStyle = 'white';
+			ctx.strokeStyle = 'white';
+			const cx = playerRoom.x * ROOM_SIZE;
+			const cy = playerRoom.y * ROOM_SIZE;
+			// drawWalls(ctx, getRoomFromCell(character.cx, character.cy), cx, cy);
+			for (let suby = -1; suby <= 1; suby++) {
+				for (let subx = -1; subx <= 1; subx++) {
+					// ctx.fillText('-', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
+					// ctx.fillText('.', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
+					ctx.strokeRect(cx + subx * CELL_SIZE, cy + suby * CELL_SIZE, 3, 3);
+				}
 			}
-		}
-		const characterRoomPosition = {
-			x: $state.position.cx - characterRoom.x * 3,
-			y: $state.position.cy - characterRoom.y * 3,
-		};
 
-		for (const action of $state.actions) {
-			const actionRoom = {
-				x: Math.floor((action.from.cx + 1) / 3),
-				y: Math.floor((action.from.cy + 1) / 3),
-			};
-			const positionInRoom = {
-				x: action.from.cx - actionRoom.x * 3,
-				y: action.from.cy - actionRoom.y * 3,
-			};
-			ctx.globalAlpha = 0.3;
-			ctx.fillText(
-				'👣',
-				actionRoom.x * ROOM_SIZE + positionInRoom.x * CELL_SIZE,
-				actionRoom.y * ROOM_SIZE + positionInRoom.y * CELL_SIZE
-			);
-			ctx.globalAlpha = 1;
+			for (const action of player.actions) {
+				const actionRoom = {
+					x: Math.floor((action.from.cx + 1) / 3),
+					y: Math.floor((action.from.cy + 1) / 3),
+				};
+				const positionInRoom = {
+					x: action.from.cx - actionRoom.x * 3,
+					y: action.from.cy - actionRoom.y * 3,
+				};
+				ctx.globalAlpha = 0.3;
+				ctx.fillText(
+					'👣',
+					actionRoom.x * ROOM_SIZE + positionInRoom.x * CELL_SIZE,
+					actionRoom.y * ROOM_SIZE + positionInRoom.y * CELL_SIZE
+				);
+				ctx.globalAlpha = 1;
+			}
 		}
 
 		// console.log({characters: state.$state.characters});
-		for (const character of state.$state.characters) {
-			const cx = character.position.x * ROOM_SIZE - CELL_SIZE / 2;
-			const cy = character.position.y * ROOM_SIZE - CELL_SIZE / 2;
-			Blockie.get(character.id).draw(ctx, cx, cy, 8);
+		if (this.$gameState) {
+			for (const character of this.$gameState.characters) {
+				const cx = character.position.x * ROOM_SIZE - CELL_SIZE / 2;
+				const cy = character.position.y * ROOM_SIZE - CELL_SIZE / 2;
+				Blockie.get(character.id).draw(ctx, cx, cy, 8);
+			}
 		}
 
-		if (account.$state.address) {
-			Blockie.get(account.$state.address).draw(
+		if (player && playerRoom) {
+			const playerRoomRoomPosition = {
+				x: player.cellPosition.cx - playerRoom.x * 3,
+				y: player.cellPosition.cy - playerRoom.y * 3,
+			};
+			Blockie.get(player.address).draw(
 				ctx,
-				characterRoom.x * ROOM_SIZE + characterRoomPosition.x * CELL_SIZE - CELL_SIZE / 2,
-				characterRoom.y * ROOM_SIZE + characterRoomPosition.y * CELL_SIZE - CELL_SIZE / 2,
+				playerRoom.x * ROOM_SIZE + playerRoomRoomPosition.x * CELL_SIZE - CELL_SIZE / 2,
+				playerRoom.y * ROOM_SIZE + playerRoomRoomPosition.y * CELL_SIZE - CELL_SIZE / 2,
 				8
 			);
 

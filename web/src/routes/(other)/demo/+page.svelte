@@ -4,6 +4,7 @@
 	import {account, connection, network} from '$lib/web3';
 	import {status, state} from '$lib/blockchain/state/State';
 	import Canvas2D from '$lib/render/Canvas2D.svelte';
+	import {gameState} from '$lib/game/GameState';
 
 	let messageToSend: string;
 </script>
@@ -32,7 +33,7 @@
 		<div>Loading ...</div>
 	{/if}
 
-	<Canvas2D state />
+	<Canvas2D {gameState} />
 	<!-- {/if} -->
 </section>
 

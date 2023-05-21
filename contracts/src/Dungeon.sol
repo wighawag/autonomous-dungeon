@@ -27,6 +27,7 @@ contract Dungeon is Proxied {
     );
 
     event StateUpdate(address indexed player, uint256 position, uint8 life);
+    event EpochHash(uint256 indexed epoch, bytes32 epochHash);
 
     // ----------------------------------------------------------------------------------------------
     // TYPES
@@ -64,6 +65,8 @@ contract Dungeon is Proxied {
     mapping(uint256 => RoomStatus) public roomStatus;
     mapping(address => Character) public characters;
     mapping(address => Commitment) public commitments;
+
+    bytes32 public epochHash;
 
     // ----------------------------------------------------------------------------------------------
     // STORAGE
@@ -113,6 +116,10 @@ contract Dungeon is Proxied {
             // }
         }
 
+        // we compute our epochHash as reveal are entered
+        // Note that later we might want to only use commitment who has gone deep enough in the dungeon
+        epochHash = secret ^ epochHash;
+
         characters[player].position = currentPosition;
 
         bytes24 hashResolved = commitment.hash;
@@ -121,6 +128,8 @@ contract Dungeon is Proxied {
         } else {
             commitment.epoch = 0; // used
         }
+
+        emit EpochHash(epoch + 1, epochHash);
 
         emit CommitmentResolved(player, epoch, hashResolved, actions, furtherActions);
 

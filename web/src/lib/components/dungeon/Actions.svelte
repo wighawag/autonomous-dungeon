@@ -1,11 +1,10 @@
 <script lang="ts">
-	import {controller, phase} from '$lib/blockchain/state/Controller';
-	import {account, accountData} from '$lib/web3';
+	import {controller, phase} from '$lib/game/Controller';
+	import {accountData} from '$lib/web3';
 	import type {CommitAction, OnChainAction} from '$lib/web3/account-data';
 	import {contracts} from '$lib/web3/viem';
 	import {fromCellActionsToRoomActions, xyToBigIntID, type RoomAction} from 'jolly-roger-common';
 	import {encodeAbiParameters, keccak256} from 'viem';
-	import {state} from '$lib/blockchain/state/State';
 
 	const offchainState = accountData.offchainState;
 

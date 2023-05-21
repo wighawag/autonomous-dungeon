@@ -43,17 +43,15 @@ export type OnChainAction = {
 	  }
 );
 
-export type Epoch = {hash: string};
+export type Epoch = {hash: `0x${string}`};
 export type OnChainActions = {[hash: `0x${string}`]: OnChainAction};
 
 export type OffchainState = {
 	epoch?: Epoch;
-	position: CellPosition;
 	actions: CellAction[];
 };
 
 const defaultOffchainState: OffchainState = {
-	position: {cx: 0, cy: 0},
 	actions: [],
 };
 
@@ -89,7 +87,6 @@ export function initAccountData() {
 
 		if (data.offchainState) {
 			$offchainState.actions = data.offchainState.actions;
-			$offchainState.position = data.offchainState.position;
 			$offchainState.epoch = data.offchainState.epoch;
 			offchainState.set($offchainState);
 		}
@@ -122,7 +119,6 @@ export function initAccountData() {
 		onchainActions.set($onchainActions);
 		$offchainState.actions = [];
 		$offchainState.epoch = undefined;
-		$offchainState.position = {cx: 0, cy: 0};
 		offchainState.set($offchainState);
 		emitter.emit({name: 'clear'});
 	}
@@ -217,15 +213,7 @@ export function initAccountData() {
 	}
 
 	function resetOffchainState(alsoSave: boolean = true) {
-		const firstAction = $offchainState.actions[0];
 		$offchainState.actions.splice(0, $offchainState.actions.length);
-		if (firstAction) {
-			$offchainState.position.cx = firstAction.from.cx;
-			$offchainState.position.cy = firstAction.from.cy;
-		} else {
-			$offchainState.position.cx = 0;
-			$offchainState.position.cy = 0;
-		}
 
 		$offchainState.epoch = undefined;
 		if (alsoSave) {
@@ -234,23 +222,17 @@ export function initAccountData() {
 		offchainState.set($offchainState);
 	}
 
-	function move(epoch: Epoch, to: CellPosition) {
+	function move(epoch: Epoch, from: CellPosition, to: CellPosition) {
 		if ($offchainState.epoch && epoch.hash !== $offchainState.epoch.hash) {
 			resetOffchainState(false);
 			$offchainState.epoch = epoch;
 		}
-		$offchainState.actions.push({type: 'move', to, from: {...$offchainState.position}});
-		$offchainState.position.cx = to.cx;
-		$offchainState.position.cy = to.cy;
+		$offchainState.actions.push({type: 'move', to, from});
 		save();
 		offchainState.set($offchainState);
 	}
 
 	function back() {
-		if ($offchainState.actions.length > 0) {
-			$offchainState.position.cx = $offchainState.actions[$offchainState.actions.length - 1].from.cx;
-			$offchainState.position.cy = $offchainState.actions[$offchainState.actions.length - 1].from.cy;
-		}
 		$offchainState.actions.splice($offchainState.actions.length - 1, 1);
 		save();
 		offchainState.set($offchainState);
