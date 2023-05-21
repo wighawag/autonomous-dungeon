@@ -109,36 +109,41 @@
 <div
 	class={`fixed top-20 right-0 card w-96 ${actionsLeft <= 0 ? 'bg-red-500' : 'bg-neutral'} text-neutral-content m-1`}
 >
-	{#if $offchainState.actions.length > 0}
+	{#if $gameState.player}
 		<div class="card-body items-center text-center">
 			{#if $phase.comitting}
-				<p>{timeToText($phase.timeLeftToCommit)} left</p>
-
-				{#if $gameState.player?.committed}
-					<h2 class="card-title">Action Commited</h2>
-					<div class="card-actions justify-end">
-						{#if $execute_increaseBlockTime.error}
-							{$execute_increaseBlockTime.error}
-							<button class={`btn btn-error m-2`} on:click={() => execute_increaseBlockTime.acknowledgeError()}
-								>Ok</button
-							>
-						{:else}
-							<button
-								class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
-								on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToCommit)}
-								>Switch to Reveal Phase</button
-							>
-						{/if}
-						<!-- <button class="btn btn-primary" on:click={() => commit()}>Commit</button> -->
-						<!-- <button class="btn btn-ghost" on:click={() => reset()}>Reset</button> -->
-					</div>
+				{#if $offchainState.actions.length == 0}
+					<p>{timeToText($phase.timeLeftToCommit)} left</p>
+					<h2 class="card-title">Make your move</h2>
 				{:else}
-					<h2 class="card-title">Ready to Commit?</h2>
-					<p>You have {actionsLeft} actions left</p>
-					<div class="card-actions justify-end">
-						<button class="btn btn-primary" on:click={() => commit()}>Commit</button>
-						<button class="btn btn-ghost" on:click={() => reset()}>Reset</button>
-					</div>
+					<p>{timeToText($phase.timeLeftToCommit)} left</p>
+
+					{#if $gameState.player?.committed}
+						<h2 class="card-title">Action Commited</h2>
+						<div class="card-actions justify-end">
+							{#if $execute_increaseBlockTime.error}
+								{$execute_increaseBlockTime.error}
+								<button class={`btn btn-error m-2`} on:click={() => execute_increaseBlockTime.acknowledgeError()}
+									>Ok</button
+								>
+							{:else}
+								<button
+									class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
+									on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToCommit)}
+									>Switch to Reveal Phase</button
+								>
+							{/if}
+							<!-- <button class="btn btn-primary" on:click={() => commit()}>Commit</button> -->
+							<!-- <button class="btn btn-ghost" on:click={() => reset()}>Reset</button> -->
+						</div>
+					{:else}
+						<h2 class="card-title">Ready to Commit?</h2>
+						<p>You have {actionsLeft} actions left</p>
+						<div class="card-actions justify-end">
+							<button class="btn btn-primary" on:click={() => commit()}>Commit</button>
+							<button class="btn btn-ghost" on:click={() => reset()}>Reset</button>
+						</div>
+					{/if}
 				{/if}
 			{:else if $gameState.player?.revealed}
 				<h2 class="card-title">Action Revealed</h2>

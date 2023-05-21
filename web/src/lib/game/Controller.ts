@@ -24,6 +24,7 @@ export function initController() {
 		const currentHash = $gameState.epoch.hash;
 		if (currentHash !== $dungeon.epoch.hash) {
 			$dungeon = generateEpoch(currentHash);
+			accountData.offchainState.reset();
 			dungeon.set($dungeon);
 		}
 	});

@@ -1,6 +1,6 @@
 import {pendingState} from '$lib/blockchain/state/PendingState';
 import {account, accountData} from '$lib/web3';
-import type {CommitMetadata, OnChainAction} from '$lib/web3/account-data';
+import type {CommitMetadata, OffchainState, OnChainAction} from '$lib/web3/account-data';
 import type {CellAction, CellPosition} from 'jolly-roger-common';
 import type {Data} from 'jolly-roger-indexer';
 import {derived, type Readable} from 'svelte/store';
@@ -49,17 +49,19 @@ export const gameState: Readable<GameState> = derived(
 			}
 		}
 
+		let offchainState: OffchainState = $offchainState;
+
 		const data: GameState = {
 			player: $account.address
 				? {
 						address: $account.address,
 						cellPosition:
-							$offchainState.actions.length > 0
-								? $offchainState.actions[$offchainState.actions.length - 1].to
+							offchainState.actions.length > 0
+								? offchainState.actions[offchainState.actions.length - 1].to
 								: player
 								? {cx: player.position.x * 3, cy: player.position.y * 3}
 								: {cx: 0, cy: 0},
-						actions: $offchainState.actions,
+						actions: offchainState.actions,
 						committed: onchainActionForEpoch,
 						revealed: player?.revealed || false,
 				  }
