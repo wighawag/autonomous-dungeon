@@ -16,7 +16,7 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 		return {
 			characters: [],
 			epoch: {
-				// TODO
+				// TODO use an event ? or a constructor arg ?
 				hash: '0x0000000000000000000000000000000000000000000000000000000000000000',
 				number: 0,
 			},
