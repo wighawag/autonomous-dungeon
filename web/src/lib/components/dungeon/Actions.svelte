@@ -59,7 +59,7 @@
 			});
 			contracts.Dungeon.write({
 				functionName: 'makeCommitment',
-				args: [commitmentHash],
+				args: [$gameState.playerCharacter!.id, commitmentHash],
 			});
 		});
 	}
@@ -101,7 +101,12 @@
 			});
 			contracts.Dungeon.write({
 				functionName: 'resolve',
-				args: [account.address, secret, contractActions, '0x000000000000000000000000000000000000000000000000'],
+				args: [
+					$gameState.playerCharacter!.id,
+					secret,
+					contractActions,
+					'0x000000000000000000000000000000000000000000000000',
+				],
 				gas: force ? 1000000n : undefined,
 			});
 		});
@@ -113,7 +118,12 @@
 <div
 	class={`fixed top-20 right-0 card w-96 ${actionsLeft <= 0 ? 'bg-red-500' : 'bg-neutral'} text-neutral-content m-1`}
 >
-	{#if $gameState.player}
+	{#if !$gameState.playerCharacter}
+		<!-- <div class="card-body items-center text-center">
+			<h2 class="card-title">Do You Want to Enter The Dungeon?</h2>
+			<button class="btn btn-secondary" on:click={() => 2}>Enter</button>
+		</div> -->
+	{:else if $gameState.player}
 		<div class="card-body items-center text-center">
 			{#if $phase.comitting}
 				{#if $offchainState.actions.length == 0}

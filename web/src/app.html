@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="width: 100%; height: 100%">
+<html lang="en" style="width: 100%; height: 100%" data-theme="forest">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
@@ -46,12 +46,6 @@
 		</script>
 
 		%sveltekit.head%
-		<!-- ensure theme is considered right away, no flash -->
-		<script>
-			try {
-				document.documentElement.setAttribute('data-theme', localStorage.getItem('theme'));
-			} catch (e) {}
-		</script>
 	</head>
 	<!-- --w3m-modal-z-index overrids the low z-index of wallet connect modal (89) -->
 	<body data-sveltekit-preload-data="hover" style="--w3m-modal-z-index: 1001; margin: 0; width: 100%; height: 100%">

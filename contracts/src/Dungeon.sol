@@ -17,19 +17,22 @@ contract Dungeon is Proxied {
     // ----------------------------------------------------------------------------------------------
     // EVENTS
     // ----------------------------------------------------------------------------------------------
-    event CommitmentMade(address indexed player, uint32 indexed epoch, bytes24 commitmentHash);
-    event CommitmentVoid(address indexed player, uint32 indexed epoch);
+    event CommitmentMade(uint256 indexed characterID, uint32 indexed epoch, bytes24 commitmentHash);
+    event CommitmentVoid(uint256 indexed characterID, uint32 indexed epoch);
     event CommitmentResolved(
-        address indexed player,
+        uint256 indexed characterID,
         uint32 indexed epoch,
         bytes24 indexed commitmentHash,
         Action[] actions,
         bytes24 furtherActions
     );
 
-    event PlayerUpdate(address indexed player, uint256 indexed position, uint8 life, uint256 gold, bytes32 equipment);
+    event CharacterUpdate(
+        uint256 indexed characterID, uint256 indexed position, uint8 life, uint256 gold, bytes32 equipment
+    );
     event RoomUpdate(uint256 indexed position, bytes32 goldBattle, bytes32 monsterBattle);
     event EpochHashUpdate(uint256 indexed epoch, bytes32 epochHash);
+    event CharacterEnterTheDungeon(address indexed player, uint256 indexed characterID);
 
     // ----------------------------------------------------------------------------------------------
     // STORAGE TYPES
@@ -43,7 +46,7 @@ contract Dungeon is Proxied {
     }
 
     struct RoomStatus {
-        bytes32 goldBattle; // this represent a battle against other player with gold given to winner
+        bytes32 goldBattle; // this represent a battle against other character with gold given to winner
         bytes32 monsterBattle; // this represent a battle against a monster with loot shared (based on success? // or same/similar like goldBattle)
     }
 
@@ -81,8 +84,9 @@ contract Dungeon is Proxied {
     // ----------------------------------------------------------------------------------------------
 
     mapping(uint256 => RoomStatus) public roomStatus;
-    mapping(address => Character) public characters;
-    mapping(address => Commitment) public commitments;
+    mapping(uint256 => Character) public characters;
+    mapping(uint256 => address) public owners;
+    mapping(uint256 => Commitment) public commitments;
 
     bytes32 internal epochHash_0;
     bytes32 internal epochHash_1;
@@ -101,21 +105,30 @@ contract Dungeon is Proxied {
     // PUBLIC INTERFACE
     // ----------------------------------------------------------------------------------------------
 
-    function makeCommitment(bytes24 commitmentHash) external {
-        Character memory character = characters[msg.sender];
-        if (character.position == 0) {
-            if (character.life == 0) {
-                // character.life = 3;
-            }
-            // _handleCharacter(msg.sender, character);
-        } else {
-            require(character.life > 0, "DEAD");
-        }
-        _makeCommitment(msg.sender, commitmentHash);
+    function enter(uint256 characterID) external payable {
+        require(msg.value == 1000 gwei, "GIVE ME THE MONEY");
+        // TODO check ownership and transfer NFT
+        // for now we use the player address as character id
+        // we also ensure you cannot enter twice
+        // TODO leaving the dungeon
+        characterID = uint256(uint160(msg.sender));
+        require(owners[characterID] == address(0), "ALREADY_IN");
+
+        owners[characterID] = msg.sender;
+        emit CharacterEnterTheDungeon(msg.sender, characterID);
+
+        _handleCharacter(characterID, Character({position: 0, life: 3, gold: 0, equipment: bytes32(0)}));
     }
 
-    function resolve(address player, bytes32 secret, Action[] calldata actions, bytes24 furtherActions) external {
-        Commitment storage commitment = commitments[player];
+    function makeCommitment(uint256 characterID, bytes24 commitmentHash) external {
+        require(owners[characterID] == msg.sender, "NOT_OWNER");
+        Character memory character = characters[characterID];
+        require(character.life > 0, "DEAD");
+        _makeCommitment(characterID, commitmentHash);
+    }
+
+    function resolve(uint256 characterID, bytes32 secret, Action[] calldata actions, bytes24 furtherActions) external {
+        Commitment storage commitment = commitments[characterID];
         (uint32 epoch, bool commiting) = _epoch();
 
         require(!commiting, "IN_COMMITING_PHASE");
@@ -124,7 +137,7 @@ contract Dungeon is Proxied {
 
         _checkHash(commitment.hash, secret, actions, furtherActions);
 
-        Character memory character = characters[player];
+        Character memory character = characters[characterID];
         Room memory currentRoom = computeRoom(roomHash(epoch, character.position));
 
         for (uint256 i = 0; i < actions.length; i++) {
@@ -145,13 +158,13 @@ contract Dungeon is Proxied {
             }
         }
 
-        _handleCommitment(player, epoch, commitment, actions, furtherActions);
+        _handleCommitment(characterID, epoch, commitment, actions, furtherActions);
         _handleEpochHash(epoch, secret);
-        _handleCharacter(player, character);
+        _handleCharacter(characterID, character);
     }
 
     function _handleCommitment(
-        address player,
+        uint256 characterID,
         uint32 epoch,
         Commitment storage commitment,
         Action[] memory actions,
@@ -164,7 +177,7 @@ contract Dungeon is Proxied {
             commitment.epoch = 0; // used
         }
 
-        emit CommitmentResolved(player, epoch, hashResolved, actions, furtherActions);
+        emit CommitmentResolved(characterID, epoch, hashResolved, actions, furtherActions);
     }
 
     function _handleEpochHash(uint32 epoch, bytes32 secret) internal {
@@ -179,13 +192,13 @@ contract Dungeon is Proxied {
         }
     }
 
-    function _handleCharacter(address player, Character memory character) internal {
-        characters[player] = character;
+    function _handleCharacter(uint256 characterID, Character memory character) internal {
+        characters[characterID] = character;
 
         // CommitmentResolved event contains everything needed for an indexer to recompute the state
         // but here for simplicity we emit the latest data just computed
 
-        emit PlayerUpdate(player, character.position, character.life, character.gold, character.equipment);
+        emit CharacterUpdate(characterID, character.position, character.life, character.gold, character.equipment);
     }
 
     function roomID(int32 x, int32 y) public pure returns (uint256) {
@@ -248,8 +261,8 @@ contract Dungeon is Proxied {
     // INTERNALS
     // ----------------------------------------------------------------------------------------------
 
-    function _makeCommitment(address player, bytes24 commitmentHash) internal {
-        Commitment storage commitment = commitments[player];
+    function _makeCommitment(uint256 characterID, bytes24 commitmentHash) internal {
+        Commitment storage commitment = commitments[characterID];
 
         (uint32 epoch, bool commiting) = _epoch();
 
@@ -259,21 +272,19 @@ contract Dungeon is Proxied {
         // TODO extract this into a separate function that can also be called by anyone (past the corresponding reveal phase)
         //  Would be used to claim the gold, equipment, etc...
         if (commitment.epoch != 0 && commitment.epoch != epoch) {
-            // actually why would the player call `makeCommitment` if its character cannot even move
-            // This also lead us to talk about character and player association
-            characters[msg.sender].life = 0;
+            characters[characterID].life = 0;
             commitment.epoch = 0;
 
-            emit CommitmentVoid(player, epoch);
+            emit CommitmentVoid(characterID, epoch);
 
             // CommitmentVoid event contains everything needed for an indexer to recompute the state
             // but here for simplicity we emit the latest data just computed
-            emit PlayerUpdate(
-                player,
-                characters[player].position,
-                characters[player].life,
-                characters[player].gold,
-                characters[player].equipment
+            emit CharacterUpdate(
+                characterID,
+                characters[characterID].position,
+                characters[characterID].life,
+                characters[characterID].gold,
+                characters[characterID].equipment
             );
         }
 
@@ -283,8 +294,8 @@ contract Dungeon is Proxied {
         commitment.hash = commitmentHash;
         commitment.epoch = epoch;
 
-        // Note: A player can change its commitment at any time until the commit phase ends.
-        emit CommitmentMade(player, epoch, commitmentHash);
+        // Note: A character can change its commitment at any time until the commit phase ends.
+        emit CommitmentMade(characterID, epoch, commitmentHash);
     }
 
     function _checkHash(bytes24 commitmentHash, bytes32 secret, Action[] memory actions, bytes24 furtherActions)

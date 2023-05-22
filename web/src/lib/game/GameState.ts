@@ -35,7 +35,7 @@ export const gameState: Readable<GameState> = derived(
 	[account, pendingState, accountData.offchainState, accountData.onchainActions],
 	([$account, $pendingState, $offchainState, $onchainActions]) => {
 		const playerCharacter = $account.address
-			? $pendingState.characters.find((v) => v.id.toLowerCase() === $account.address?.toLowerCase())
+			? $pendingState.characters.find((v) => v.player.toLowerCase() === $account.address?.toLowerCase())
 			: undefined;
 		const characters = !playerCharacter
 			? $pendingState.characters

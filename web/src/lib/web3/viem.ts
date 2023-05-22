@@ -57,6 +57,14 @@ export const contracts = {
 						abi: contract.abi,
 						functionName: args.functionName,
 						args: args.args as any,
+						value: args.value,
+						accessList: args.accessList,
+						dataSuffix: args.dataSuffix,
+						gas: args.gas,
+						gasPrice: args.gasPrice,
+						maxFeePerGas: args.maxFeePerGas,
+						maxPriorityFeePerGas: args.maxPriorityFeePerGas,
+						nonce: args.nonce,
 					});
 				};
 				const read = (args: ContractParameters<Abi>) => {

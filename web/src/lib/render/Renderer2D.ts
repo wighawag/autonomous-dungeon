@@ -225,7 +225,7 @@ export class Canvas2DRenderer implements Readable<RenderViewState> {
 			for (const character of this.$gameState.characters) {
 				const cx = character.position.x * ROOM_SIZE - CELL_SIZE / 2;
 				const cy = character.position.y * ROOM_SIZE - CELL_SIZE / 2;
-				Blockie.get(character.id).draw(ctx, cx, cy, 8);
+				Blockie.get(character.player).draw(ctx, cx, cy, 8);
 			}
 		}
 
