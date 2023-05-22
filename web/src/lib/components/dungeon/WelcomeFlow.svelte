@@ -11,7 +11,6 @@
 			});
 			await contracts.Dungeon.write({
 				functionName: 'enter',
-				args: [1n],
 				value: 1000000000000000n,
 			});
 		});
@@ -49,7 +48,7 @@
 			<button on:click={() => step++} class="btn btn-error">Take</button>
 		</div>
 	{:else if step == 4}
-		<p class="text-sm">That will be 1000 gwei my friend!</p>
+		<p class="text-sm">That will be 1 KWEI my friend!</p>
 		<div class="modal-action">
 			<button on:click={() => enter()} class="btn btn-error">Enter</button>
 		</div>

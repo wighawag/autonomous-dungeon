@@ -83,6 +83,9 @@ importers:
       ldenv:
         specifier: ^0.3.5
         version: 0.3.5
+      solidity-kit:
+        specifier: ^0.2.9
+        version: 0.2.9
       ts-node:
         specifier: ^10.9.1
         version: 10.9.1(@types/node@20.1.2)(typescript@5.0.4)
@@ -6164,6 +6167,10 @@ packages:
       tmp: 0.0.33
     transitivePeerDependencies:
       - debug
+    dev: true
+
+  /solidity-kit@0.2.9:
+    resolution: {integrity: sha512-dhV9IdFahZvdqBIkpWOUfnPB11uhayxl1/VO0v/M8aFFUmxtpu1OiSRX0U5vlSq/TUVNtJt9xb4j6sFSXFxCMQ==}
     dev: true
 
   /sorcery@0.11.0:

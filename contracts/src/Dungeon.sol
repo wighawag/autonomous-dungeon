@@ -2,8 +2,10 @@
 pragma solidity ^0.8.20;
 
 import "forge-deploy-proxy/ForgeDeploy_Proxied.sol";
-import "./Extraction.sol";
 import "forge-std/console.sol";
+
+import "./Extraction.sol";
+import "./Characters.sol";
 
 contract Dungeon is Proxied {
     // ----------------------------------------------------------------------------------------------
@@ -91,29 +93,35 @@ contract Dungeon is Proxied {
     bytes32 internal epochHash_0;
     bytes32 internal epochHash_1;
 
+    Characters immutable characterTokens;
+
     // ----------------------------------------------------------------------------------------------
     // CONSTRUCTOR / INITIALIZER
     // ----------------------------------------------------------------------------------------------
 
-    constructor() {
-        postUpgrade();
+    constructor(Characters charactersCollection) {
+        characterTokens = charactersCollection;
+        postUpgrade(charactersCollection);
     }
 
-    function postUpgrade() public proxied {}
+    function postUpgrade(Characters charactersCollection) public proxied {
+        if (charactersCollection != characterTokens) {
+            revert("characterTokens is immutable");
+        }
+    }
 
     // ----------------------------------------------------------------------------------------------
     // PUBLIC INTERFACE
     // ----------------------------------------------------------------------------------------------
 
-    function enter(uint256 characterID) external payable {
+    function enter() external payable {
         require(msg.value == 1000000000000000, "GIVE ME THE KWEI");
-        // TODO check ownership and transfer NFT
-        // for now we use the player address as character id
-        // we also ensure you cannot enter twice
-        // TODO leaving the dungeon
-        characterID = uint256(uint160(msg.sender));
+        // for now we just associate character with wallet
+        // TODO
+        // TODO leaving
+        uint256 characterID = uint256(uint160(msg.sender));
         require(owners[characterID] == address(0), "ALREADY_IN");
-
+        characterTokens.mint(characterID, address(this));
         owners[characterID] = msg.sender;
         emit CharacterEnterTheDungeon(msg.sender, characterID);
 
@@ -154,7 +162,7 @@ contract Dungeon is Proxied {
                 // we do not continue when we encounter an invalid move
                 // for simplicity, we still count was was computed so far
                 // TODO alternative: revert the whole moves but keep the commitment
-                break;
+                // break;
             }
         }
 
@@ -258,7 +266,7 @@ contract Dungeon is Proxied {
     }
 
     // ----------------------------------------------------------------------------------------------
-    // INTERNALS
+    // INTERNAL
     // ----------------------------------------------------------------------------------------------
 
     function _makeCommitment(uint256 characterID, bytes24 commitmentHash) internal {
@@ -324,7 +332,7 @@ contract Dungeon is Proxied {
 
     function _isValidMove(uint256 roomPosition, Room memory room, uint256 newPosition, Room memory newRoom)
         internal
-        view // pure
+        pure
         returns (bool)
     {
         (int32 x, int32 y) = roomCoords(roomPosition);
