@@ -4,7 +4,7 @@ import type {
 	GenericContractsInfos,
 	ConnectedAccountState,
 } from 'web3-connection';
-import {createPublicClient, type Chain, type Hash, type WalletClient} from 'viem';
+import {createPublicClient, type Chain, type Hash, type WalletClient, keccak256, toHex} from 'viem';
 import type {WriteContractParameters} from 'viem/contract';
 import type {NetworkConfig} from '$lib/config';
 import type {Abi} from 'abitype';
@@ -92,3 +92,8 @@ export const contracts = {
 		});
 	},
 };
+
+if (typeof window != 'undefined') {
+	(window as any).keccak256 = keccak256;
+	(window as any).toHex = toHex;
+}

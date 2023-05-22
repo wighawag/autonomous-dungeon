@@ -43,10 +43,10 @@ contract Deployments is DeployScript {
         //     console.log("same");
         // }
         deployer.ignoreDeployment("Dungeon_Implementation");
-        Dungeon implementation = deployer.deploy_Dungeon(
+        Dungeon implementation = deployer.deploy_TimeControlledDungeon(
             "Dungeon_Implementation", characters, ProxyOptionsOnTag({onTag: "", owner: vm.envAddress("DEPLOYER")})
         );
-        return deployer.deploy_Dungeon(
+        return deployer.deploy_TimeControlledDungeon(
             "Dungeon",
             characters,
             FullProxyOptions({

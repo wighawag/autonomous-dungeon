@@ -6,8 +6,9 @@ import "forge-std/console.sol";
 
 import "./Extraction.sol";
 import "./Characters.sol";
+import "./ITimeControlled.sol";
 
-contract Dungeon is Proxied {
+contract Dungeon is Proxied, ITimeControlled {
     // ----------------------------------------------------------------------------------------------
     // CONSTANTS
     // ----------------------------------------------------------------------------------------------
@@ -474,9 +475,9 @@ contract Dungeon is Proxied {
         uint256 epochDuration = TOTAL;
 
         // For now START_TIMESTAMP = 0
-        require(block.timestamp >= START_TIMESTAMP, "GAME_NOT_STARTED");
+        require(_timestamp() >= START_TIMESTAMP, "GAME_NOT_STARTED");
 
-        uint256 timePassed = block.timestamp - START_TIMESTAMP;
+        uint256 timePassed = _timestamp() - START_TIMESTAMP;
         epoch = uint32((timePassed / epochDuration) + 1);
         commiting = timePassed - ((epoch - 1) * epochDuration) < ACTION_PERIOD;
     }
@@ -519,5 +520,9 @@ contract Dungeon is Proxied {
                 return 4; // undefined
             }
         }
+    }
+
+    function _timestamp() internal view virtual override returns (uint256) {
+        return block.timestamp;
     }
 }
