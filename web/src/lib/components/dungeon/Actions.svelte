@@ -12,8 +12,9 @@
 	import {camera} from '$lib/render/camera';
 	import {ROOM_SIZE} from '$lib/render/Renderer2D';
 	import CombatStanceSelection, {chooseCombatStance} from './CombatStanceSelection.svelte';
+	import {increaseDungeonTime} from '$lib/utils/dungeon';
 
-	const execute_increaseBlockTime = createExecutor(increaseBlockTime);
+	const execute_increaseBlockTime = createExecutor(increaseDungeonTime); //createExecutor(increaseBlockTime);
 
 	const offchainState = accountData.offchainState;
 
@@ -64,6 +65,7 @@
 				epoch: get(gameState).epoch,
 				actions,
 				secret,
+				combatStance,
 			});
 			contracts.Dungeon.write({
 				functionName: 'makeCommitment',
@@ -75,13 +77,16 @@
 	function reveal(force = false) {
 		contracts.execute(async ({contracts, connection, account}) => {
 			const onchainActions = accountData.$onchainActions;
-			const combatStance = 7; // TODO
 			let actionToCommit: OnChainAction | undefined;
 			let actions: RoomAction[] | undefined;
 			let secret: `0x${string}` | undefined;
 			let txHash: `0x${string}` | undefined;
+			let combatStance: number | undefined;
 			for (const onchainAction of Object.entries(onchainActions)) {
 				const metadata = onchainAction[1].tx.metadata;
+				if (!metadata) {
+					continue;
+				}
 				console.log({metadata});
 				if (metadata.type === 'reveal') {
 				} else if (metadata.type === 'commit') {
@@ -90,11 +95,12 @@
 						txHash = onchainAction[0] as `0x${string}`;
 						actions = metadata.actions;
 						secret = metadata.secret;
+						combatStance = metadata.combatStance;
 					}
 				}
 			}
 
-			if (!actionToCommit || !secret || !actions) {
+			if (!actionToCommit || !secret || !actions || !combatStance) {
 				throw new Error(`no action to commit`);
 			}
 

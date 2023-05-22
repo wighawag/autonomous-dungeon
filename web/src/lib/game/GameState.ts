@@ -48,6 +48,9 @@ export const gameState: Readable<GameState> = derived(
 		for (const entry of Object.entries($onchainActions)) {
 			const txHash = entry[0];
 			const action = entry[1];
+			if (!action.tx.metadata) {
+				continue;
+			}
 			if (action.tx.metadata.type === 'commit') {
 				if (
 					action.status === 'Success' &&

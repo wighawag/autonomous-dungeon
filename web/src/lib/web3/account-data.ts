@@ -15,6 +15,7 @@ export type CommitMetadata = {
 	roomActions: RoomAction[]; // no
 	actions: RoomAction[];
 	secret: `0x${string}`;
+	combatStance: number;
 };
 
 export type RevealMetadata = {
@@ -26,7 +27,7 @@ export type RevealMetadata = {
 export type AnyMetadata = CommitMetadata | RevealMetadata;
 
 export type DungeonTransaction<T = AnyMetadata> = EIP1193TransactionWithMetadata & {
-	metadata: {
+	metadata?: {
 		epoch: {
 			hash: `0x${string}`;
 			number: number;

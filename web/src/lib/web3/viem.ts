@@ -4,22 +4,40 @@ import type {
 	GenericContractsInfos,
 	ConnectedAccountState,
 } from 'web3-connection';
-import {createPublicClient, type Chain, type Hash, type WalletClient, keccak256, toHex} from 'viem';
+import {
+	createPublicClient,
+	type Chain,
+	type Hash,
+	type WalletClient,
+	keccak256,
+	toHex,
+	type ReadContractParameters,
+	encodeFunctionData,
+} from 'viem';
 import type {WriteContractParameters} from 'viem/contract';
 import type {NetworkConfig} from '$lib/config';
 import type {Abi} from 'abitype';
 import {createWalletClient, custom} from 'viem';
 import {execute} from '$lib/web3';
 
-type ContractParameters<TAbi extends Abi, TFunctionName extends string = string, TChain extends Chain = Chain> = Omit<
-	WriteContractParameters<TAbi, TFunctionName, TChain>,
+type CleanedUpWriteContractParameters<
+	TAbi extends Abi,
+	TFunctionName extends string = string,
+	TChain extends Chain = Chain
+> = Omit<WriteContractParameters<TAbi, TFunctionName, TChain>, 'address' | 'abi' | 'account'>;
+
+type CleanedUpReadContractParameters<TAbi extends Abi, TFunctionName extends string = string> = Omit<
+	ReadContractParameters<TAbi, TFunctionName>,
 	'address' | 'abi' | 'account'
 >;
 
 export type ViemContract<ABI extends Abi, TChain extends Chain = Chain> = {
 	write: <TFunctionName extends string = string>(
-		params: ContractParameters<ABI, TFunctionName, TChain>
+		params: CleanedUpWriteContractParameters<ABI, TFunctionName, TChain>
 	) => Promise<Hash>;
+	read: <TFunctionName extends string = string>(
+		params: CleanedUpReadContractParameters<ABI, TFunctionName>
+	) => Promise<any>; // TODO
 };
 
 export type Contracts = NetworkConfig['contracts'];
@@ -47,7 +65,7 @@ export const contracts = {
 			const anyContracts = network.contracts as GenericContractsInfos;
 			const contracts: ViemContracts = Object.keys(network.contracts).reduce((prev, curr) => {
 				const contract = anyContracts[curr];
-				const write = (args: ContractParameters<Abi>) => {
+				const write = (args: CleanedUpWriteContractParameters<Abi>) => {
 					return client.writeContract({
 						chain: {
 							id: parseInt(network.chainId),
@@ -67,7 +85,7 @@ export const contracts = {
 						nonce: args.nonce,
 					});
 				};
-				const read = (args: ContractParameters<Abi>) => {
+				const read = (args: CleanedUpReadContractParameters<Abi>) => {
 					return publicClient.readContract({
 						address: contract.address,
 						abi: contract.abi,
@@ -96,4 +114,5 @@ export const contracts = {
 if (typeof window != 'undefined') {
 	(window as any).keccak256 = keccak256;
 	(window as any).toHex = toHex;
+	(window as any).encodeFunctionData = encodeFunctionData;
 }

@@ -6,9 +6,9 @@ import "forge-std/console.sol";
 
 import "./Extraction.sol";
 import "./Characters.sol";
-import "./ITimeControlled.sol";
+import "./UsingInternalTimestamp.sol";
 
-contract Dungeon is Proxied, ITimeControlled {
+contract Dungeon is Proxied, UsingInternalTimestamp {
     // ----------------------------------------------------------------------------------------------
     // CONSTANTS
     // ----------------------------------------------------------------------------------------------
