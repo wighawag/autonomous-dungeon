@@ -6,6 +6,7 @@
 	import Welcome from '$lib/components/Welcome.svelte';
 	import Actions from '$lib/components/dungeon/Actions.svelte';
 	import Choices from '$lib/components/dungeon/Choices.svelte';
+	import Modal from '$lib/components/modals/Modal.svelte';
 </script>
 
 <Canvas2D {gameState} />
@@ -25,10 +26,16 @@
 	{/if}
 </div>
 
-<Welcome />
+{#if $gameState.playerCharacter && $gameState.playerCharacter.life == 0}
+	<Modal>
+		<h3 class="text-lg font-bold">You Are Dead</h3>
+	</Modal>
+{:else}
+	<Welcome />
 
-<Actions />
+	<Actions />
 
-<Choices />
+	<Choices />
+{/if}
 
 <Web3ConnectionUi />
