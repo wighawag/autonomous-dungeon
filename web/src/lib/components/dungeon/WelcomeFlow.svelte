@@ -12,7 +12,7 @@
 			await contracts.Dungeon.write({
 				functionName: 'enter',
 				args: [1n],
-				value: 1000000000000n,
+				value: 1000000000000000n,
 			});
 		});
 	}

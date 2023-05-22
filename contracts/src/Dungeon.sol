@@ -106,7 +106,7 @@ contract Dungeon is Proxied {
     // ----------------------------------------------------------------------------------------------
 
     function enter(uint256 characterID) external payable {
-        require(msg.value == 1000 gwei, "GIVE ME THE MONEY");
+        require(msg.value == 1000000000000000, "GIVE ME THE KWEI");
         // TODO check ownership and transfer NFT
         // for now we use the player address as character id
         // we also ensure you cannot enter twice

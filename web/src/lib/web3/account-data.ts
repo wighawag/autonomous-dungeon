@@ -243,6 +243,8 @@ export function initAccountData() {
 		if ($offchainState.epoch && epoch.hash !== $offchainState.epoch.hash) {
 			resetOffchainState(false);
 			$offchainState.epoch = epoch;
+		} else {
+			$offchainState.epoch = epoch;
 		}
 		$offchainState.actions.push({type: 'move', to, from});
 		save();
