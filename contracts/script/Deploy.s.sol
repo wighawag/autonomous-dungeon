@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {DeployScript, Deployer} from "forge-deploy/DeployScript.sol";
+import {DeployScript, Deployer, Deployment} from "forge-deploy/DeployScript.sol";
 import {
     ProxiedDeployerFunctions,
     ProxyOptionsOnTag,
@@ -23,7 +23,25 @@ contract Deployments is DeployScript {
             );
         }
 
-        // TODO better handling of implementation with constructor params
+        // TODO forge-deploy provide type safe args encoder
+        // bytes memory args = abi.encode(characters);
+        // Deployment memory existingImpl = deployer.get("Dungeon_Implementation");
+        // Dungeon implementation = Dungeon(existingImpl.addr);
+        // console.logAddress(existingImpl.addr);
+        // // TODO better handling of implementation with constructor params
+        // bytes memory data = bytes.concat(vm.getCode("Dungeon.sol:Dungeon"), args);
+        // if (
+        //     existingImpl.addr == address(0)
+        //         || keccak256(bytes.concat(existingImpl.bytecode, existingImpl.args)) != keccak256(data)
+        // ) {
+        //     console.log("different");
+        //     deployer.ignoreDeployment("Dungeon_Implementation");
+        //     implementation = deployer.deploy_Dungeon(
+        //         "Dungeon_Implementation", characters, ProxyOptionsOnTag({onTag: "", owner: vm.envAddress("DEPLOYER")})
+        //     );
+        // } else {
+        //     console.log("same");
+        // }
         deployer.ignoreDeployment("Dungeon_Implementation");
         Dungeon implementation = deployer.deploy_Dungeon(
             "Dungeon_Implementation", characters, ProxyOptionsOnTag({onTag: "", owner: vm.envAddress("DEPLOYER")})
