@@ -31,8 +31,6 @@
 </script>
 
 <script lang="ts">
-	$: console.log($promise);
-
 	$: options = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 	let selection: number[] = [];
@@ -46,8 +44,6 @@
 		}
 		selection = selection;
 	}
-
-	$: console.log(fromArrayToNumber(selection));
 </script>
 
 {#if $promise}

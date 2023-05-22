@@ -73,7 +73,6 @@ export function computePhase(timestamp: number, synced = true) {
 	const timeLeftToReveal = isActionPhase ? -1 : TOTAL - timePassed;
 	const timeLeftToEpochEnd = TOTAL - timePassed;
 
-	console.log({time: timestamp, epoch});
 	return {
 		comitting: isActionPhase,
 		epoch,

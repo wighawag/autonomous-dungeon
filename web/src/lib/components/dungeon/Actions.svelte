@@ -29,9 +29,13 @@
 			if (!epochNumber) {
 				throw new Error(`no epoch from phase`);
 			}
-			const epoch = get(gameState).epoch;
+			const epoch = {...get(gameState).epoch};
+			if (epoch.number === 0) {
+				// special case:
+				epoch.number = epochNumber;
+			}
 			if (epochNumber != epoch.number) {
-				throw new Error(`different epoch detected`);
+				throw new Error(`different epoch detected local:${epochNumber} remote:${epoch.number}`);
 			}
 
 			const actions = accountData.$offchainState.actions;
@@ -86,13 +90,13 @@
 
 	function reveal(force = false) {
 		contracts.execute(async ({contracts, connection, account}) => {
-			const epoch = get(phase).epoch;
-			if (!epoch) {
+			const epochNumber = get(phase).epoch;
+			if (!epochNumber) {
 				throw new Error(`no epoch from phase`);
 			}
 			const epochBeforeReveal = get(gameState).epochBeforeReveal;
-			if (epoch !== epochBeforeReveal.number) {
-				throw new Error(`different epoch detected`);
+			if (epochNumber !== epochBeforeReveal.number) {
+				throw new Error(`different epoch detected local:${epochNumber} remote:${epochBeforeReveal.number}`);
 			}
 
 			const onchainActions = accountData.$onchainActions;
@@ -106,7 +110,6 @@
 				if (!metadata) {
 					continue;
 				}
-				console.log({metadata});
 				if (metadata.type === 'reveal') {
 				} else if (metadata.type === 'commit') {
 					if (!actionToCommit || actionToCommit.tx.timestamp < onchainAction[1].tx.timestamp) {

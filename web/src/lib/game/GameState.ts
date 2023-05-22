@@ -1,10 +1,11 @@
 import {pendingState} from '$lib/blockchain/state/PendingState';
+import {phase} from '$lib/time';
 import {account, accountData} from '$lib/web3';
 import type {CommitMetadata, OffchainState, OnChainAction, RevealMetadata} from '$lib/web3/account-data';
 import type {RoomAction, RoomPosition} from 'jolly-roger-common';
 // import type {CellAction, CellPosition} from 'jolly-roger-common';
 import type {Character, Data} from 'jolly-roger-indexer';
-import {derived, type Readable} from 'svelte/store';
+import {derived, get, type Readable} from 'svelte/store';
 
 export type GameState = {
 	player:
@@ -45,6 +46,18 @@ export const gameState: Readable<GameState> = derived(
 		let commitForBeforeRevealEpoch: OnChainAction<CommitMetadata> | undefined;
 		let revealForEpoch: OnChainAction<RevealMetadata> | undefined;
 
+		const epoch = {...$pendingState.epoch};
+		if (epoch.number === 0) {
+			// special case
+			epoch.number = get(phase).epoch;
+		}
+		const epochBeforeReveal = {...$pendingState.epochBeforeReveal};
+		if (epochBeforeReveal.number === 0) {
+			// special case
+			epochBeforeReveal.number = get(phase).epoch;
+		}
+		// console.log({epochBeforeReveal, epoch});
+
 		// const $phase = get(phase);
 		// const epochFromClient = $phase?.epoch;
 		// console.log({epochFromClient});
@@ -59,8 +72,8 @@ export const gameState: Readable<GameState> = derived(
 				if (
 					action.status === 'Success' &&
 					action.inclusion === 'Included' &&
-					action.tx.metadata.epoch.hash === $pendingState.epoch.hash &&
-					action.tx.metadata.epoch.number === $pendingState.epoch.number
+					action.tx.metadata.epoch.hash === epoch.hash &&
+					action.tx.metadata.epoch.number === epoch.number
 					// && epochFromClient === action.tx.metadata.epoch.number
 				) {
 					if (!commitForEpoch || commitForEpoch.tx.timestamp < action.tx.timestamp) {
@@ -72,8 +85,8 @@ export const gameState: Readable<GameState> = derived(
 				if (
 					action.status === 'Success' &&
 					action.inclusion === 'Included' &&
-					action.tx.metadata.epoch.hash === $pendingState.epochBeforeReveal.hash &&
-					action.tx.metadata.epoch.number === $pendingState.epochBeforeReveal.number
+					action.tx.metadata.epoch.hash === epochBeforeReveal.hash &&
+					action.tx.metadata.epoch.number === epochBeforeReveal.number
 				) {
 					if (!commitForBeforeRevealEpoch || commitForBeforeRevealEpoch.tx.timestamp < action.tx.timestamp) {
 						// we use the latest
@@ -85,8 +98,8 @@ export const gameState: Readable<GameState> = derived(
 				if (
 					action.status === 'Success' &&
 					action.inclusion === 'Included' &&
-					action.tx.metadata.epoch.hash === $pendingState.epochBeforeReveal.hash &&
-					action.tx.metadata.epoch.number === $pendingState.epochBeforeReveal.number
+					action.tx.metadata.epoch.hash === epochBeforeReveal.hash &&
+					action.tx.metadata.epoch.number === epochBeforeReveal.number
 				) {
 					if (!revealForEpoch || revealForEpoch.tx.timestamp < action.tx.timestamp) {
 						// we use the latest
@@ -122,8 +135,8 @@ export const gameState: Readable<GameState> = derived(
 				  }
 				: undefined,
 			playerCharacter,
-			epoch: $pendingState.epoch,
-			epochBeforeReveal: $pendingState.epochBeforeReveal,
+			epoch,
+			epochBeforeReveal,
 			characters,
 		};
 
