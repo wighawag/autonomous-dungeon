@@ -143,7 +143,7 @@ export class Canvas2DRenderer implements Readable<RenderViewState> {
 					ctx.fillText('🐉', cx + -1 * CELL_SIZE, cy + -1 * CELL_SIZE);
 				}
 
-				if (room.chest) {
+				if (room.treasure) {
 					ctx.fillText('💰', cx + 1 * CELL_SIZE, cy + 1 * CELL_SIZE);
 					// 🗝
 				}

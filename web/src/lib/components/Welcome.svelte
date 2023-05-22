@@ -8,12 +8,16 @@
 
 	$: progress = $status.state === 'Loaded' ? 100 : $syncing.lastSync?.syncPercentage || 0;
 
-	let ready = false;
+	let ready = true;
 	onMount(() => {
+		ready = true;
 		const timeout = setTimeout(() => {
 			ready = true;
 		}, 1000);
-		return () => clearTimeout(timeout);
+		return () => {
+			ready = true;
+			clearTimeout(timeout);
+		};
 	});
 </script>
 
@@ -27,7 +31,7 @@
 	</Modal>
 {:else if $status.state !== 'Loaded'}
 	<Modal>
-		<h3 class="text-lg font-bold">Please wait....</h3>
+		<h3 class="text-lg font-bold">Please wait While we Index....</h3>
 		<div class="radial-progress bg-primary text-primary-content border-4 border-primary" style="--value:{progress};">
 			{progress}%
 		</div>
@@ -36,6 +40,6 @@
 	<WelcomeFlow />
 {:else if !ready}
 	<Modal>
-		<h3 class="text-lg font-bold">Please wait....</h3>
+		<h3 class="text-lg font-bold">Please wait While the Game Get Setup....</h3>
 	</Modal>
 {/if}

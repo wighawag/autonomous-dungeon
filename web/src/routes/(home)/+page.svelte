@@ -5,6 +5,7 @@
 	import ConnectButton from '$lib/web3/ConnectButton.svelte';
 	import Welcome from '$lib/components/Welcome.svelte';
 	import Actions from '$lib/components/dungeon/Actions.svelte';
+	import Choices from '$lib/components/dungeon/Choices.svelte';
 </script>
 
 <Canvas2D {gameState} />
@@ -15,12 +16,19 @@
 
 <div class="fixed top-0 left-0 z-10">
 	{#if $gameState.playerCharacter}
-		<p>{$gameState.playerCharacter.life}</p>
+		<div class="card">
+			<div class="card-body bg-purple-300 text-red-600">
+				<p>life: {$gameState.playerCharacter.life}</p>
+				<p>gold: {$gameState.playerCharacter.gold}</p>
+			</div>
+		</div>
 	{/if}
 </div>
 
 <Welcome />
 
 <Actions />
+
+<Choices />
 
 <Web3ConnectionUi />

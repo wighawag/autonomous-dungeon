@@ -25,6 +25,7 @@
 			const actions = accountData.$offchainState.actions;
 			const contractActions = actions.map((v) => ({
 				position: xyToBigIntID(v.to.x, v.to.y),
+				pickTreasure: v.treasure === 'pick',
 			}));
 
 			// TODO use deterministic secret using private wallet:
@@ -43,6 +44,10 @@
 								{
 									name: 'position',
 									type: 'uint64',
+								},
+								{
+									name: 'pickTreasure',
+									type: 'bool',
 								},
 							],
 						},
@@ -91,6 +96,7 @@
 
 			const contractActions = actions.map((v) => ({
 				position: xyToBigIntID(v.to.x, v.to.y),
+				pickTreasure: v.treasure === 'pick',
 			}));
 
 			// TODO jolly-rogeR: type-safe via web3-connection type config (AccountData Management)

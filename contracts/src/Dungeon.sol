@@ -43,6 +43,7 @@ contract Dungeon is Proxied {
     struct Character {
         uint256 position;
         uint256 gold;
+        // TODO xp
         uint8 life;
         bytes32 equipment;
     }
@@ -73,11 +74,12 @@ contract Dungeon is Proxied {
 
     struct Action {
         uint256 position; // TODO uint64
+        bool pickTreasure;
     }
 
     struct Room {
         bool[4] exits;
-        bool chest;
+        bool treasure;
         bool monster;
     }
 
@@ -155,6 +157,11 @@ contract Dungeon is Proxied {
             if (_isValidMove(character.position, currentRoom, action.position, newRoom)) {
                 character.position = action.position;
                 currentRoom = newRoom;
+                if (action.pickTreasure) {
+                    if (currentRoom.treasure) {
+                        character.gold = character.gold + 1 ether;
+                    }
+                }
             } else {
                 // For now:
                 revert("invalid move");
@@ -245,13 +252,13 @@ contract Dungeon is Proxied {
         // // const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
         // // const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 
-        // const chest = value(roomHashData, 9, 10) < 7; // take 1024 values [0,2**10[
-        bool chest = Extraction.value(roomHashData, 9, 10) < 7;
+        // const treasure = value(roomHashData, 9, 10) < 7; // take 1024 values [0,2**10[
+        bool treasure = Extraction.value(roomHashData, 9, 10) < 700;
 
         // const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
         uint8 monsterRaw = uint8(Extraction.value(roomHashData, 19, 7));
-        // const monster = chest ? monsterRaw < 30 : monsterRaw < 1;
-        bool monster = chest ? monsterRaw < 30 : monsterRaw < 1;
+        // const monster = treasure ? monsterRaw < 30 : monsterRaw < 1;
+        bool monster = treasure ? monsterRaw < 30 : monsterRaw < 1;
 
         return Room({
             exits: [
@@ -260,7 +267,7 @@ contract Dungeon is Proxied {
                 firstExit == 2 || secondExit == 2,
                 firstExit == 3 || secondExit == 3
             ],
-            chest: chest,
+            treasure: treasure,
             monster: monster
         });
     }
@@ -332,11 +339,15 @@ contract Dungeon is Proxied {
 
     function _isValidMove(uint256 roomPosition, Room memory room, uint256 newPosition, Room memory newRoom)
         internal
-        pure
+        view // pure
         returns (bool)
     {
         (int32 x, int32 y) = roomCoords(roomPosition);
         (int32 nx, int32 ny) = roomCoords(newPosition);
+        if (x == nx && y == ny) {
+            console.log("same");
+            return true;
+        }
         uint8 direction = _direction(x, y, nx, ny);
         if (direction == 4) {
             return false;

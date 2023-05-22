@@ -12,11 +12,18 @@ export * from './bn';
 // 	to: CellPosition;
 // };
 
-export type RoomAction = {
+export type MoveAction = {
 	type: 'move';
-	from: RoomPosition; // not really needed, // TODO remove
+	treasure: undefined | 'pick' | 'ignore';
+	from: RoomPosition;
 	to: RoomPosition;
 };
+// export type PickTreasureAction = {
+// 	type: 'move';
+//     from: RoomPosition;
+//     to: RoomPosition;
+// }
+export type RoomAction = MoveAction;
 
 export type RoomPosition = {
 	x: number;
@@ -98,7 +105,7 @@ export function roomDirection(from: RoomPosition, to: RoomPosition): 0 | 1 | 2 |
 export type RawRoom = {
 	// north, east, west, south
 	exits: [boolean, boolean, boolean, boolean];
-	chest: boolean;
+	treasure: boolean;
 	monster: boolean;
 };
 
@@ -160,9 +167,9 @@ export function generateEpoch(epochHash: `0x${string}`) {
 			// const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 			// const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 
-			const chest = value(roomHashData, 9, 10) < 7; // take 1024 values [0,2**10[
+			const treasure = value(roomHashData, 9, 10) < 700; // take 1024 values [0,2**10[
 			const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
-			const monster = chest ? monsterRaw < 30 : monsterRaw < 1;
+			const monster = treasure ? monsterRaw < 30 : monsterRaw < 1;
 
 			room = {
 				exits: [
@@ -171,7 +178,7 @@ export function generateEpoch(epochHash: `0x${string}`) {
 					firstExit === 2 || secondExit === 2,
 					firstExit === 3 || secondExit === 3,
 				] as [boolean, boolean, boolean, boolean],
-				chest,
+				treasure,
 				monster,
 			};
 			raw_room_cache[key] = room;

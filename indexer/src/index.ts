@@ -6,6 +6,7 @@ export type Character = {
 	player: `0x${string}`;
 	id: bigint;
 	position: {x: number; y: number};
+	gold: bigint;
 	life: number;
 	revealed: boolean;
 };
@@ -51,6 +52,7 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 				id,
 				position: {x: 0, y: 0},
 				life: 0,
+				gold: 0n,
 				revealed: false,
 			});
 		} else {
@@ -96,6 +98,7 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 		} else {
 			state.characters[findIndex].position = position;
 			state.characters[findIndex].life = event.args.life;
+			state.characters[findIndex].gold = event.args.gold;
 			state.characters[findIndex].revealed = true;
 		}
 	},

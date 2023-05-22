@@ -246,7 +246,19 @@ export function initAccountData() {
 		} else {
 			$offchainState.epoch = epoch;
 		}
-		$offchainState.actions.push({type: 'move', to, from});
+		$offchainState.actions.push({type: 'move', to, from, treasure: undefined});
+		save();
+		offchainState.set($offchainState);
+	}
+
+	function pickTreasure(epoch: Epoch, position: RoomPosition, pick: boolean) {
+		if ($offchainState.epoch && epoch.hash !== $offchainState.epoch.hash) {
+			resetOffchainState(false);
+			$offchainState.epoch = epoch;
+		} else {
+			$offchainState.epoch = epoch;
+		}
+		$offchainState.actions.push({type: 'move', from: position, to: position, treasure: pick ? 'pick' : 'ignore'});
 		save();
 		offchainState.set($offchainState);
 	}
@@ -268,6 +280,7 @@ export function initAccountData() {
 			subscribe: offchainState.subscribe,
 			move,
 			back,
+			pickTreasure,
 			reset: resetOffchainState,
 		},
 

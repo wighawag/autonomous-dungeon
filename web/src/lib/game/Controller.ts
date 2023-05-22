@@ -57,6 +57,22 @@ export function initController() {
 		}
 	}
 
+	function pickTreasure(pick: boolean) {
+		if (!$gameState) {
+			throw new Error(`Game not initialised`);
+		}
+		if (!$gameState.player) {
+			throw new Error(`No player`);
+		}
+		const $state = accountData.$offchainState;
+		if (
+			$state.actions.length < 64 &&
+			$dungeon.getRoom($gameState.player.position.x, $gameState.player.position.y).treasure
+		) {
+			accountData.offchainState.pickTreasure($gameState.epoch, $gameState.player.position, pick);
+		}
+	}
+
 	function reset() {
 		accountData.offchainState.reset();
 	}
@@ -108,6 +124,7 @@ export function initController() {
 		move,
 		reset,
 		back,
+		pickTreasure,
 		max,
 		dungeon: {
 			subscribe: dungeon.subscribe,
