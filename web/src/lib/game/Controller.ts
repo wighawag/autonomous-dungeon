@@ -2,17 +2,13 @@ import {logs} from 'named-logs';
 // import {type CellPosition, type CellAction, generateEpoch, cellPositionFrom, getEpochHash} from 'jolly-roger-common';
 
 import {accountData} from '$lib/web3';
-import {derived, get, writable} from 'svelte/store';
-import {time} from '$lib/time';
+import {get, writable} from 'svelte/store';
+import {START_TIMESTAMP, TOTAL, phase, time} from '$lib/time';
 import {gameState, type GameState} from './GameState';
 import {generateEpoch, getEpochHash, roomPositionFrom, type RoomPosition, type Room} from 'jolly-roger-common';
 import type {RoomAction} from 'jolly-roger-common';
 
 const logger = logs('controller');
-
-const TOTAL = 24 * 3600;
-const ACTION_PERIOD = 23 * 3600;
-const START_TIMESTAMP = 0;
 
 export function initController() {
 	const max = 64;
@@ -203,22 +199,3 @@ export function initController() {
 }
 
 export const controller = initController();
-
-export const phase = derived(time, ($time) => {
-	const totalTimePassed = $time.timestamp - START_TIMESTAMP;
-	const epoch = Math.floor(totalTimePassed / TOTAL + 1);
-	const epochStartTime = (epoch - 1) * TOTAL;
-	const timePassed = $time.timestamp - epochStartTime;
-	const isActionPhase = $time.synced && timePassed < ACTION_PERIOD;
-	const timeLeftToCommit = ACTION_PERIOD - timePassed;
-	const timeLeftToReveal = isActionPhase ? -1 : TOTAL - timePassed;
-	const timeLeftToEpochEnd = TOTAL - timePassed;
-
-	return {
-		comitting: isActionPhase,
-		epoch,
-		timeLeftToReveal,
-		timeLeftToCommit,
-		timeLeftToEpochEnd,
-	};
-});

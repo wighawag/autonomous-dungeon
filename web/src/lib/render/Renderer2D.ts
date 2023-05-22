@@ -150,8 +150,31 @@ export class Canvas2DRenderer implements Readable<RenderViewState> {
 			}
 		}
 
+		const playerCharacter = this.$gameState?.playerCharacter;
+
+		// if (playerCharacter) {
+		// 	const startingRoom = playerCharacter.position;
+		// 	ctx.fillStyle = 'green';
+		// 	ctx.strokeStyle = 'green';
+		// 	const cx = startingRoom.x * ROOM_SIZE;
+		// 	const cy = startingRoom.y * ROOM_SIZE;
+		// 	// drawWalls(ctx, getRoomFromCell(character.cx, character.cy), cx, cy);
+		// 	// for (let suby = -1; suby <= 1; suby++) {
+		// 	// 	for (let subx = -1; subx <= 1; subx++) {
+		// 	// 		// ctx.fillText('-', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
+		// 	// 		// ctx.fillText('.', cx + subx * CELL_SIZE, cy + suby * CELL_SIZE);
+		// 	// 		ctx.strokeRect(cx + subx * CELL_SIZE, cy + suby * CELL_SIZE, 3, 3);
+		// 	// 	}
+		// 	// }
+		// 	const prev_lineWidth = ctx.lineWidth;
+		// 	ctx.lineWidth = 5;
+		// 	ctx.strokeRect(cx - ROOM_SIZE / 2, cy - ROOM_SIZE / 2, ROOM_SIZE, ROOM_SIZE);
+		// 	ctx.lineWidth = prev_lineWidth;
+		// }
+
 		const player = this.$gameState?.player;
 		const playerRoom = player ? player.position : undefined;
+
 		if (player && playerRoom) {
 			ctx.fillStyle = 'white';
 			ctx.strokeStyle = 'white';

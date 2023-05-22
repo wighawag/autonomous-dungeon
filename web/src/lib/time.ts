@@ -1,9 +1,9 @@
-import {writable} from 'svelte/store';
+import {derived, writable} from 'svelte/store';
 import {connection, devProvider} from './web3';
 import {encodeFunctionData} from 'viem';
 import {initialContractsInfos} from './config';
 
-let timestamp = Date.now();
+let timestamp = Math.floor(Date.now() / 1000);
 const _time = writable({timestamp, synced: false}, (set) => {
 	let timeout: NodeJS.Timeout | undefined;
 	async function getTime() {
@@ -36,7 +36,9 @@ const _time = writable({timestamp, synced: false}, (set) => {
 				// timestamp = connection.$state.provider?.currentTime() || Math.floor(Date.now() / 1000);
 			}
 
-			set({timestamp, synced: true});
+			if (timestamp && !isNaN(timestamp)) {
+				set({timestamp, synced: true});
+			}
 		} finally {
 			if (timeout) {
 				timeout = setTimeout(getTime, 3000);
@@ -56,3 +58,31 @@ export const time = {
 		return timestamp;
 	},
 };
+
+export const TOTAL = 24 * 3600;
+export const ACTION_PERIOD = 23 * 3600;
+export const START_TIMESTAMP = 0;
+
+export function computePhase(timestamp: number, synced = true) {
+	const totalTimePassed = timestamp - START_TIMESTAMP;
+	const epoch = Math.floor(totalTimePassed / TOTAL + 1);
+	const epochStartTime = (epoch - 1) * TOTAL;
+	const timePassed = timestamp - epochStartTime;
+	const isActionPhase = synced && timePassed < ACTION_PERIOD;
+	const timeLeftToCommit = ACTION_PERIOD - timePassed;
+	const timeLeftToReveal = isActionPhase ? -1 : TOTAL - timePassed;
+	const timeLeftToEpochEnd = TOTAL - timePassed;
+
+	console.log({time: timestamp, epoch});
+	return {
+		comitting: isActionPhase,
+		epoch,
+		timeLeftToReveal,
+		timeLeftToCommit,
+		timeLeftToEpochEnd,
+	};
+}
+
+export const phase = derived(time, ($time) => {
+	return computePhase($time.timestamp, $time.synced);
+});

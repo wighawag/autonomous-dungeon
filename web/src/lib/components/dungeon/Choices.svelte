@@ -1,6 +1,7 @@
 <script lang="ts">
-	import {controller, phase} from '$lib/game/Controller';
+	import {controller} from '$lib/game/Controller';
 	import {gameState} from '$lib/game/GameState';
+	import {phase} from '$lib/time';
 	import Modal from '../modals/Modal.svelte';
 	const dungeon = controller.dungeon;
 
