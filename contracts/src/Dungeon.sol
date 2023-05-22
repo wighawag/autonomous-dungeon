@@ -40,6 +40,8 @@ contract Dungeon is Proxied {
     event RoomUpdate(uint256 indexed position, bytes32 goldBattle, bytes32 monsterBattle);
     event EpochHashUpdate(uint256 indexed epoch, bytes32 epochHash);
     event CharacterEnterTheDungeon(address indexed player, uint256 indexed characterID);
+    event MonsterClaim(uint256 indexed characterID, uint256 indexed position, uint256 indexed epoch);
+    event MonsterDefeat(uint256 indexed position, uint256 indexed epoch);
 
     // ----------------------------------------------------------------------------------------------
     // STORAGE TYPES
@@ -64,6 +66,10 @@ contract Dungeon is Proxied {
         uint16 combatStance;
     }
 
+    struct MonsterBattle {
+        uint256 life; // when max uint player have the drop, but it is only given onchain on next epoch reveal (it is always given, event on death)
+    }
+
     struct Commitment {
         bytes24 hash;
         uint32 epoch;
@@ -79,9 +85,10 @@ contract Dungeon is Proxied {
     // uint256 gold;
     // bytes32 equipment;
 
-    // struct Monster {
-    //     uint8 life;
-    // }
+    struct Monster {
+        uint8 life;
+        uint16 combatStance;
+    }
 
     struct Action {
         uint256 position; // TODO uint64
@@ -98,7 +105,9 @@ contract Dungeon is Proxied {
     // STORAGE
     // ----------------------------------------------------------------------------------------------
 
-    mapping(uint256 => GoldBattle) public goldBattles;
+    mapping(uint256 => mapping(uint256 => GoldBattle)) public goldBattles; // we use epoch to ensure not reading from last // TODO optimize by keeping track of epoch used instead of mapping
+    mapping(uint256 => mapping(uint256 => MonsterBattle)) public monsterBattles; // per epoch, so player can claim later: TODO document the 2 and half phase system
+    mapping(uint256 => uint256) public monsterClaims;
     mapping(uint256 => Character) public characters;
     mapping(uint256 => address) public owners;
     mapping(uint256 => Commitment) public commitments;
@@ -178,8 +187,13 @@ contract Dungeon is Proxied {
                 currentRoom = newRoom;
                 if (action.pickTreasure) {
                     if (currentRoom.treasure) {
-                        _handleGoldBattle(characterID, character, combatStance);
+                        _handleGoldBattle(epoch, characterID, character, combatStance);
                     }
+                    // } else if (action.battleMonster) {
+                    //     if (currentRoom.monster) {
+                    //         // Monster monster = room.monster;
+                    //         _handleMonsterBattle(epoch, characterID, character, combatStance);
+                    //     }
                 }
             } else {
                 // For now:
@@ -197,8 +211,10 @@ contract Dungeon is Proxied {
         _handleCharacter(characterID, character);
     }
 
-    function _handleGoldBattle(uint256 characterID, Character memory character, uint16 combatStance) internal {
-        GoldBattle memory battle = goldBattles[character.position];
+    function _handleGoldBattle(uint256 epoch, uint256 characterID, Character memory character, uint16 combatStance)
+        internal
+    {
+        GoldBattle memory battle = goldBattles[epoch][character.position];
         if (battle.combatStance == 0) {
             character.gold = character.gold + 1 ether;
             battle.currentWinner = characterID;
@@ -226,7 +242,50 @@ contract Dungeon is Proxied {
             }
         }
 
-        goldBattles[character.position] = battle;
+        goldBattles[epoch][character.position] = battle;
+    }
+
+    function _handleMonsterBattle(
+        uint256 epoch,
+        uint256 characterID,
+        Character memory character,
+        uint16 combatStance,
+        Monster memory monster
+    ) internal {
+        MonsterBattle memory battle = monsterBattles[epoch][character.position];
+        battle.life = battle.life == 0 ? monster.life : battle.life;
+
+        int8 result = _battle(combatStance, monster.combatStance);
+        if (result > 0) {
+            if (battle.life != type(uint256).max) {
+                // if not already dead
+                battle.life--;
+                if (battle.life == 0) {
+                    battle.life = type(uint256).max; // monster is dead
+                    emit MonsterDefeat(character.position, epoch);
+                }
+            }
+        } else if (result < 0) {
+            character.life = character.life - 1;
+        }
+
+        if (battle.life == type(uint256).max) {
+            // no need to fight, you get a share
+            character.gold = character.gold + 2 ether;
+            // NOTE that if we want to make it a share
+            // we can't give gold now, but need to do it in the post-reveal phase (offchain-present, onchain-future)
+        } else {
+            monsterClaims[characterID] = epoch; // the position is the last one, we just need to make sure we execute the claim before anything else
+            emit MonsterClaim(characterID, character.position, epoch);
+        }
+
+        monsterBattles[epoch][character.position] = battle;
+    }
+
+    function _handlePlayerBattle(uint256 epoch, uint256 characterID, Character memory character, uint16 combatStance)
+        internal
+    {
+        // TODO
     }
 
     function _battle(uint16 p1_battleStance, uint16 p2_battleStance) internal pure returns (int8 total) {
