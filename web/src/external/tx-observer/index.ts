@@ -3,7 +3,7 @@ import type {EIP1193Provider, EIP1193Block} from 'eip-1193';
 import type {EIP1193TransactionWithMetadata} from 'web3-connection';
 import {initEmitter} from '$external/callbacks';
 import {logs} from 'named-logs';
-import {throttle} from 'lodash';
+import {throttle} from 'lodash-es';
 
 const logger = logs('tx-observer');
 
