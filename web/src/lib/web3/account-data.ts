@@ -252,6 +252,18 @@ export function initAccountData() {
 		offchainState.set($offchainState);
 	}
 
+	function set(epoch: Epoch, actions: RoomAction[]) {
+		if ($offchainState.epoch && epoch.hash !== $offchainState.epoch.hash) {
+			resetOffchainState(false);
+			$offchainState.epoch = epoch;
+		} else {
+			$offchainState.epoch = epoch;
+		}
+		$offchainState.actions = actions;
+		save();
+		offchainState.set($offchainState);
+	}
+
 	function pickTreasure(epoch: Epoch, position: RoomPosition, pick: boolean) {
 		if ($offchainState.epoch && epoch.hash !== $offchainState.epoch.hash) {
 			resetOffchainState(false);
@@ -281,6 +293,7 @@ export function initAccountData() {
 			subscribe: offchainState.subscribe,
 			move,
 			back,
+			set,
 			pickTreasure,
 			reset: resetOffchainState,
 		},

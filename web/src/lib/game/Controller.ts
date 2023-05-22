@@ -5,7 +5,8 @@ import {accountData} from '$lib/web3';
 import {derived, get, writable} from 'svelte/store';
 import {time} from '$lib/time';
 import {gameState, type GameState} from './GameState';
-import {generateEpoch, getEpochHash, roomPositionFrom, type RoomPosition} from 'jolly-roger-common';
+import {generateEpoch, getEpochHash, roomPositionFrom, type RoomPosition, type Room} from 'jolly-roger-common';
+import type {RoomAction} from 'jolly-roger-common';
 
 const logger = logs('controller');
 
@@ -117,7 +118,72 @@ export function initController() {
 	}
 
 	function onRoomClicked(x: number, y: number, cx: number, cy: number) {
-		console.log(x, y, cx, cy);
+		const position = $gameState?.playerCharacter?.position;
+		if (!position) {
+			console.log(`no position`, x, y, cx, cy);
+			return;
+		}
+
+		const goal = $dungeon.getRoom(position.x, position.y);
+		const start = $dungeon.getRoom(x, y);
+		const frontier: Room[] = [];
+		frontier.push(start);
+		const came_from: Map<Room, Room> = new Map(); // path A->B is stored as came_from[B] == A
+		// came_from[clicked] = null
+
+		let found = false;
+		while (frontier.length > 0) {
+			const current = frontier.shift() as Room;
+			if (current.x === goal.x && current.y === goal.y) {
+				found = true;
+				break;
+			}
+
+			const neighboors: Room[] = [];
+			if (current.exits[0]) {
+				const coords = roomPositionFrom(current, 0, -1);
+				neighboors.push($dungeon.getRoom(coords.x, coords.y));
+			}
+			if (current.exits[1]) {
+				const coords = roomPositionFrom(current, 1, 0);
+				neighboors.push($dungeon.getRoom(coords.x, coords.y));
+			}
+			if (current.exits[2]) {
+				const coords = roomPositionFrom(current, 0, 1);
+				neighboors.push($dungeon.getRoom(coords.x, coords.y));
+			}
+			if (current.exits[3]) {
+				const coords = roomPositionFrom(current, -1, 0);
+				neighboors.push($dungeon.getRoom(coords.x, coords.y));
+			}
+			for (const next of neighboors) {
+				if (!came_from.get(next)) {
+					frontier.push(next);
+					came_from.set(next, current);
+				}
+			}
+		}
+		if (found) {
+			let backward_current = goal;
+			const actions: RoomAction[] = [];
+			while (backward_current != start) {
+				const from = backward_current;
+				backward_current = came_from.get(backward_current) as Room;
+				actions.push({
+					type: 'move',
+					treasure: undefined,
+					from: {
+						x: from.x,
+						y: from.y,
+					},
+					to: {
+						x: backward_current.x,
+						y: backward_current.y,
+					},
+				});
+			}
+			accountData.offchainState.set($gameState!.epoch, actions);
+		}
 	}
 
 	return {
