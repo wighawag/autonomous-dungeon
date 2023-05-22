@@ -394,7 +394,7 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
         // // const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 
         // const treasure = value(roomHashData, 9, 10) < 7; // take 1024 values [0,2**10[
-        bool treasure = Extraction.value(roomHashData, 9, 10) < 700;
+        bool treasure = Extraction.value(roomHashData, 9, 10) < 70;
 
         // const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
         uint8 monsterRaw = uint8(Extraction.value(roomHashData, 19, 7));

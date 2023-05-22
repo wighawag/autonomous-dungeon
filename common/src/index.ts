@@ -167,7 +167,7 @@ export function generateEpoch(epochHash: `0x${string}`) {
 			// const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 			// const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 
-			const treasure = value(roomHashData, 9, 10) < 700; // take 1024 values [0,2**10[
+			const treasure = value(roomHashData, 9, 10) < 70; // take 1024 values [0,2**10[
 			const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
 			const monster = treasure ? monsterRaw < 30 : monsterRaw < 1;
 

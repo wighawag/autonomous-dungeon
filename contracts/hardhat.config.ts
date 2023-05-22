@@ -1,4 +1,8 @@
-// import 'dotenv/config';
+import {loadEnv} from 'ldenv'
+loadEnv({
+	useModeEnv: 'DEPLOYMENT_CONTEXT'
+});
+
 import {HardhatUserConfig} from 'hardhat/types';
 import 'hardhat-deploy';
 import '@nomiclabs/hardhat-ethers';
