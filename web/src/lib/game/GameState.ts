@@ -45,6 +45,9 @@ export const gameState: Readable<GameState> = derived(
 		let commitForBeforeRevealEpoch: OnChainAction<CommitMetadata> | undefined;
 		let revealForEpoch: OnChainAction<RevealMetadata> | undefined;
 
+		// const $phase = get(phase);
+		// const epochFromClient = $phase?.epoch;
+		// console.log({epochFromClient});
 		for (const entry of Object.entries($onchainActions)) {
 			const txHash = entry[0];
 			const action = entry[1];
@@ -52,11 +55,13 @@ export const gameState: Readable<GameState> = derived(
 				continue;
 			}
 			if (action.tx.metadata.type === 'commit') {
+				// console.log({action_epoch: action.tx.metadata.epoch.number});
 				if (
 					action.status === 'Success' &&
 					action.inclusion === 'Included' &&
 					action.tx.metadata.epoch.hash === $pendingState.epoch.hash &&
 					action.tx.metadata.epoch.number === $pendingState.epoch.number
+					// && epochFromClient === action.tx.metadata.epoch.number
 				) {
 					if (!commitForEpoch || commitForEpoch.tx.timestamp < action.tx.timestamp) {
 						// we use the latest

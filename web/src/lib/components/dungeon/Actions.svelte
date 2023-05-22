@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {controller, phase} from '$lib/game/Controller';
+	import {controller} from '$lib/game/Controller';
 	import {gameState} from '$lib/game/GameState';
 	import {accountData, devProvider, execute} from '$lib/web3';
 	import type {OnChainAction} from '$lib/web3/account-data';
@@ -13,6 +13,7 @@
 	import {ROOM_SIZE} from '$lib/render/Renderer2D';
 	import CombatStanceSelection, {chooseCombatStance} from './CombatStanceSelection.svelte';
 	import {increaseDungeonTime} from '$lib/utils/dungeon';
+	import {phase} from '$lib/time';
 
 	const execute_increaseBlockTime = createExecutor(increaseDungeonTime); //createExecutor(increaseBlockTime);
 
@@ -24,6 +25,15 @@
 
 	function commit() {
 		contracts.execute(async ({contracts, connection}) => {
+			const epochNumber = get(phase).epoch;
+			if (!epochNumber) {
+				throw new Error(`no epoch from phase`);
+			}
+			const epoch = get(gameState).epoch;
+			if (epochNumber != epoch.number) {
+				throw new Error(`different epoch detected`);
+			}
+
 			const actions = accountData.$offchainState.actions;
 			const combatStance = await chooseCombatStance();
 			const contractActions = actions.map((v) => ({
@@ -62,7 +72,7 @@
 
 			connection.provider.setNextMetadata({
 				type: 'commit',
-				epoch: get(gameState).epoch,
+				epoch,
 				actions,
 				secret,
 				combatStance,
@@ -76,6 +86,15 @@
 
 	function reveal(force = false) {
 		contracts.execute(async ({contracts, connection, account}) => {
+			const epoch = get(phase).epoch;
+			if (!epoch) {
+				throw new Error(`no epoch from phase`);
+			}
+			const epochBeforeReveal = get(gameState).epochBeforeReveal;
+			if (epoch !== epochBeforeReveal.number) {
+				throw new Error(`different epoch detected`);
+			}
+
 			const onchainActions = accountData.$onchainActions;
 			let actionToCommit: OnChainAction | undefined;
 			let actions: RoomAction[] | undefined;
@@ -112,7 +131,7 @@
 			// TODO jolly-rogeR: type-safe via web3-connection type config (AccountData Management)
 			connection.provider.setNextMetadata({
 				type: 'reveal',
-				epoch: get(gameState).epochBeforeReveal,
+				epoch: epochBeforeReveal,
 				commitTx: txHash,
 			});
 			contracts.Dungeon.write({
