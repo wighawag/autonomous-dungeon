@@ -30,7 +30,12 @@ contract Dungeon is Proxied {
     );
 
     event CharacterUpdate(
-        uint256 indexed characterID, uint256 indexed position, uint8 life, uint256 gold, bytes32 equipment
+        uint256 indexed characterID,
+        uint256 indexed position,
+        uint8 life,
+        uint256 gold,
+        bytes32 equipment,
+        uint16 combatStanceAvailable
     );
     event RoomUpdate(uint256 indexed position, bytes32 goldBattle, bytes32 monsterBattle);
     event EpochHashUpdate(uint256 indexed epoch, bytes32 epochHash);
@@ -46,6 +51,7 @@ contract Dungeon is Proxied {
         // TODO xp
         uint8 life;
         bytes32 equipment;
+        uint16 combatStanceAvailable;
     }
 
     struct RoomStatus {
@@ -127,7 +133,9 @@ contract Dungeon is Proxied {
         owners[characterID] = msg.sender;
         emit CharacterEnterTheDungeon(msg.sender, characterID);
 
-        _handleCharacter(characterID, Character({position: 0, life: 3, gold: 0, equipment: bytes32(0)}));
+        _handleCharacter(
+            characterID, Character({position: 0, life: 3, gold: 0, equipment: bytes32(0), combatStanceAvailable: 511})
+        );
     }
 
     function makeCommitment(uint256 characterID, bytes24 commitmentHash) external {
@@ -137,7 +145,13 @@ contract Dungeon is Proxied {
         _makeCommitment(characterID, commitmentHash);
     }
 
-    function resolve(uint256 characterID, bytes32 secret, Action[] calldata actions, bytes24 furtherActions) external {
+    function resolve(
+        uint256 characterID,
+        bytes32 secret,
+        Action[] calldata actions,
+        uint16 combatStance,
+        bytes24 furtherActions
+    ) external {
         Commitment storage commitment = commitments[characterID];
         (uint32 epoch, bool commiting) = _epoch();
 
@@ -145,7 +159,7 @@ contract Dungeon is Proxied {
         require(commitment.epoch != 0, "NOTHING_TO_RESOLVE");
         require(commitment.epoch == epoch, "INVALID_epoch");
 
-        _checkHash(commitment.hash, secret, actions, furtherActions);
+        _checkHash(commitment.hash, secret, actions, combatStance, furtherActions);
 
         Character memory character = characters[characterID];
         Room memory currentRoom = computeRoom(roomHash(epoch, character.position));
@@ -213,7 +227,14 @@ contract Dungeon is Proxied {
         // CommitmentResolved event contains everything needed for an indexer to recompute the state
         // but here for simplicity we emit the latest data just computed
 
-        emit CharacterUpdate(characterID, character.position, character.life, character.gold, character.equipment);
+        emit CharacterUpdate(
+            characterID,
+            character.position,
+            character.life,
+            character.gold,
+            character.equipment,
+            character.combatStanceAvailable
+        );
     }
 
     function roomID(int32 x, int32 y) public pure returns (uint256) {
@@ -299,7 +320,8 @@ contract Dungeon is Proxied {
                 characters[characterID].position,
                 characters[characterID].life,
                 characters[characterID].gold,
-                characters[characterID].equipment
+                characters[characterID].equipment,
+                0
             );
         }
 
@@ -313,15 +335,18 @@ contract Dungeon is Proxied {
         emit CommitmentMade(characterID, epoch, commitmentHash);
     }
 
-    function _checkHash(bytes24 commitmentHash, bytes32 secret, Action[] memory actions, bytes24 furtherActions)
-        internal
-        pure
-    {
+    function _checkHash(
+        bytes24 commitmentHash,
+        bytes32 secret,
+        Action[] memory actions,
+        uint16 combatStance,
+        bytes24 furtherActions
+    ) internal pure {
         if (furtherActions != bytes24(0)) {
-            bytes24 computedHash = bytes24(keccak256(abi.encode(secret, actions, furtherActions)));
+            bytes24 computedHash = bytes24(keccak256(abi.encode(secret, actions, combatStance, furtherActions)));
             require(commitmentHash == computedHash, "HASH_NOT_MATCHING");
         } else {
-            bytes24 computedHash = bytes24(keccak256(abi.encode(secret, actions)));
+            bytes24 computedHash = bytes24(keccak256(abi.encode(secret, actions, combatStance)));
             require(commitmentHash == computedHash, "HASH_NOT_MATCHING");
         }
     }

@@ -8,6 +8,8 @@ export type Character = {
 	position: {x: number; y: number};
 	gold: bigint;
 	life: number;
+	equipment: `0x${string}`;
+	combatStanceAvailable: number;
 	revealed: boolean;
 };
 
@@ -53,6 +55,8 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 				position: {x: 0, y: 0},
 				life: 0,
 				gold: 0n,
+				equipment: '0x0000000000000000000000000000000000000000000000000000000000000000',
+				combatStanceAvailable: 0,
 				revealed: false,
 			});
 		} else {
@@ -99,6 +103,8 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 			state.characters[findIndex].position = position;
 			state.characters[findIndex].life = event.args.life;
 			state.characters[findIndex].gold = event.args.gold;
+			state.characters[findIndex].equipment = event.args.equipment;
+			state.characters[findIndex].combatStanceAvailable = event.args.combatStanceAvailable;
 			state.characters[findIndex].revealed = true;
 		}
 	},

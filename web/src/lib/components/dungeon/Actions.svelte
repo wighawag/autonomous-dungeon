@@ -11,6 +11,7 @@
 	import {timeToText} from '$lib/utils/time';
 	import {camera} from '$lib/render/camera';
 	import {ROOM_SIZE} from '$lib/render/Renderer2D';
+	import CombatStanceSelection, {chooseCombatStance} from './CombatStanceSelection.svelte';
 
 	const execute_increaseBlockTime = createExecutor(increaseBlockTime);
 
@@ -23,6 +24,7 @@
 	function commit() {
 		contracts.execute(async ({contracts, connection}) => {
 			const actions = accountData.$offchainState.actions;
+			const combatStance = await chooseCombatStance();
 			const contractActions = actions.map((v) => ({
 				position: xyToBigIntID(v.to.x, v.to.y),
 				pickTreasure: v.treasure === 'pick',
@@ -51,8 +53,9 @@
 								},
 							],
 						},
+						{type: 'uint16', name: 'combatStance'},
 					],
-					[secret, contractActions]
+					[secret, contractActions, combatStance]
 				)
 			).slice(0, 50) as `0x${string}`;
 
@@ -72,6 +75,7 @@
 	function reveal(force = false) {
 		contracts.execute(async ({contracts, connection, account}) => {
 			const onchainActions = accountData.$onchainActions;
+			const combatStance = 7; // TODO
 			let actionToCommit: OnChainAction | undefined;
 			let actions: RoomAction[] | undefined;
 			let secret: `0x${string}` | undefined;
@@ -111,6 +115,7 @@
 					$gameState.playerCharacter!.id,
 					secret,
 					contractActions,
+					combatStance,
 					'0x000000000000000000000000000000000000000000000000',
 				],
 				gas: force ? 1000000n : undefined,
@@ -212,3 +217,5 @@
 		</div>
 	{/if}
 </div>
+
+<CombatStanceSelection />
