@@ -385,7 +385,7 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
         uint8 firstExit = uint8(Extraction.value(roomHashData, 0, 2));
 
         // const hasSecondExit = value(roomHashData, 2, 5) < 3; // take 32 values [0,2**5[
-        bool hasSecondExit = uint8(Extraction.value(roomHashData, 2, 5)) < 3;
+        bool hasSecondExit = uint8(Extraction.value(roomHashData, 2, 5)) < 10;
         // const secondExitRaw = value(roomHashData, 7, 2); // this has one value too much.
         uint8 secondExitRaw = uint8(Extraction.value(roomHashData, 7, 2));
         // const secondExit = hasSecondExit && secondExitRaw < 3 ? secondExitRaw : 4;
@@ -394,7 +394,7 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
         // // const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 
         // const treasure = value(roomHashData, 9, 10) < 7; // take 1024 values [0,2**10[
-        bool treasure = Extraction.value(roomHashData, 9, 10) < 70;
+        bool treasure = Extraction.value(roomHashData, 9, 10) < 20;
 
         // const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
         uint8 monsterRaw = uint8(Extraction.value(roomHashData, 19, 7));

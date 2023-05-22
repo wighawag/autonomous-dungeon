@@ -161,13 +161,13 @@ export function generateEpoch(epochHash: `0x${string}`) {
 			// take from the first 0 (right side) and take 2 bits to give you a number between [0,2**2[
 			const firstExit = value(roomHashData, 0, 2);
 
-			const hasSecondExit = value(roomHashData, 2, 5) < 3; // take 32 values [0,2**5[
+			const hasSecondExit = value(roomHashData, 2, 5) < 10; // take 32 values [0,2**5[
 			const secondExitRaw = value(roomHashData, 7, 2); // this has one value too much. if
 			const secondExit = hasSecondExit && secondExitRaw < 3 ? secondExitRaw : 4;
 			// const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 			// const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 
-			const treasure = value(roomHashData, 9, 10) < 70; // take 1024 values [0,2**10[
+			const treasure = value(roomHashData, 9, 10) < 20; // take 1024 values [0,2**10[
 			const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
 			const monster = treasure ? monsterRaw < 30 : monsterRaw < 1;
 
