@@ -49,11 +49,8 @@ contract Deployments is DeployScript {
         return deployer.deploy_TimeControlledDungeon(
             "Dungeon",
             characters,
-            FullProxyOptions({
-                implementation: address(implementation),
-                onTag: "testnet",
-                owner: vm.envAddress("DEPLOYER")
-            })
+            // TODO remove "*" and put "testnet"
+            FullProxyOptions({implementation: address(implementation), onTag: "*", owner: vm.envAddress("DEPLOYER")})
         );
     }
 }
