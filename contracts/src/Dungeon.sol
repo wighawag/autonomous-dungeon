@@ -212,6 +212,7 @@ contract Dungeon is Proxied {
                 if (battle.currentWinner != 0) {
                     Character memory previous = characters[battle.currentWinner];
                     previous.gold = previous.gold - 1 ether;
+                    previous.life = previous.life - 1; // because of order issue, we need to remove that
                     _handleCharacter(battle.currentWinner, previous);
                 }
                 if (result > 0) {
