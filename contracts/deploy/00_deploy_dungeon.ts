@@ -6,12 +6,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	const {deploy} = hre.deployments;
 	const useProxy = !hre.network.live;
 
+	const Characters = await deploy("Characters", {from: deployer});
+
 	// proxy only in non-live network (localhost and hardhat network) enabling HCR (Hot Contract Replacement)
 	// in live network, proxy is disabled and constructor is invoked
 	await deploy('Dungeon', {
 		from: deployer,
 		proxy: useProxy && 'postUpgrade',
-		args: [],
+		args: [Characters.address],
 		log: true,
 		autoMine: true, // speed up deployment on local network (ganache, hardhat), no effect on live networks
 	});

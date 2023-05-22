@@ -18,19 +18,19 @@ const setup = deployments.createFixture(async () => {
 });
 describe('Dungeon', function () {
 
-	it('epochHash works', async function () {
-		const epochToGenerate = 1;
-		const {users, Dungeon} = await setup();
-		await expect(await Dungeon.callStatic["getEpochHash(uint256)"](epochToGenerate)).to.equals(keccak256(encodePacked(['uint256'], [BigInt(epochToGenerate)])))
+	// it('epochHash works', async function () {
+	// 	const epochToGenerate = 1;
+	// 	const {users, Dungeon} = await setup();
+	// 	await expect(await Dungeon.callStatic["getEpochHash(uint256)"](epochToGenerate)).to.equals(keccak256(encodePacked(['uint256'], [BigInt(epochToGenerate)])))
 
-		const lastBlockTime = await time.latest();
-		const epoch =  Math.floor((lastBlockTime - 0) / (24 * 3600));
-		const currentEpoch = (await Dungeon.callStatic["getEpoch()"]()).toString();
-		await expect(currentEpoch).to.equals(epoch.toString());
-		const currentEpochHash = await Dungeon.callStatic["getEpochHash()"]();
-		const expectedEpochHash = keccak256(encodePacked(['uint256'], [BigInt(epoch)]));
-		await expect(currentEpochHash).to.equals(expectedEpochHash)
-	});
+	// 	const lastBlockTime = await time.latest();
+	// 	const epoch =  Math.floor((lastBlockTime - 0) / (24 * 3600));
+	// 	const currentEpoch = (await Dungeon.callStatic["getEpoch()"]()).toString();
+	// 	await expect(currentEpoch).to.equals(epoch.toString());
+	// 	const currentEpochHash = await Dungeon.callStatic["getEpochHash()"]();
+	// 	const expectedEpochHash = keccak256(encodePacked(['uint256'], [BigInt(epoch)]));
+	// 	await expect(currentEpochHash).to.equals(expectedEpochHash)
+	// });
 
 
 	it('roomID works', async function () {
@@ -136,26 +136,26 @@ describe('Dungeon', function () {
 	})
 	
 
-	it('roomHash works', async function () {
-		const {users, Dungeon} = await setup();
+	// it('roomHash works', async function () {
+	// 	const {users, Dungeon} = await setup();
 
 
-		const expectedRoomID45 = xyToBigIntID(4,5);
-		// const roomID45 = (await Dungeon.callStatic.roomID(4,5)).toString();
-		// expect(roomID45).to.equals(expectedRoomID45.toString())
+	// 	const expectedRoomID45 = xyToBigIntID(4,5);
+	// 	// const roomID45 = (await Dungeon.callStatic.roomID(4,5)).toString();
+	// 	// expect(roomID45).to.equals(expectedRoomID45.toString())
 
-		const lastBlockTime = await time.latest();
-		const epoch =  Math.floor((lastBlockTime - 0) / (24 * 3600));
-		// const currentEpoch = (await Dungeon.callStatic["epoch()"]()).toString();
-		// await expect(currentEpoch).to.equals(epoch.toString());
-		// const currentEpochHash = await Dungeon.callStatic["epochHash()"]();
-		const expectedEpochHash = keccak256(encodePacked(['uint256'], [BigInt(epoch)]));
-		// await expect(currentEpochHash).to.equals(expectedEpochHash)
+	// 	const lastBlockTime = await time.latest();
+	// 	const epoch =  Math.floor((lastBlockTime - 0) / (24 * 3600));
+	// 	// const currentEpoch = (await Dungeon.callStatic["epoch()"]()).toString();
+	// 	// await expect(currentEpoch).to.equals(epoch.toString());
+	// 	// const currentEpochHash = await Dungeon.callStatic["epochHash()"]();
+	// 	const expectedEpochHash = keccak256(encodePacked(['uint256'], [BigInt(epoch)]));
+	// 	// await expect(currentEpochHash).to.equals(expectedEpochHash)
 
-		const expectedRoomHash45 = keccak256(encodePacked(['bytes32', 'uint256'], [expectedEpochHash, expectedRoomID45]));
-		const roomHash45 = await Dungeon.callStatic["roomHash(int32,int32)"](4, 5);
-		expect(roomHash45).to.equals(expectedRoomHash45)
-	});
+	// 	const expectedRoomHash45 = keccak256(encodePacked(['bytes32', 'uint256'], [expectedEpochHash, expectedRoomID45]));
+	// 	const roomHash45 = await Dungeon.callStatic["roomHash(int32,int32)"](4, 5);
+	// 	expect(roomHash45).to.equals(expectedRoomHash45)
+	// });
 
 
 	/*

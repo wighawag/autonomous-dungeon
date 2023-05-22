@@ -54,9 +54,14 @@ contract Dungeon is Proxied {
         uint16 combatStanceAvailable;
     }
 
-    struct RoomStatus {
-        bytes32 goldBattle; // this represent a battle against other character with gold given to winner
-        bytes32 monsterBattle; // this represent a battle against a monster with loot shared (based on success? // or same/similar like goldBattle)
+    // struct RoomStatus {
+    //     bytes32 goldBattle; // this represent a battle against other character with gold given to winner
+    //     bytes32 monsterBattle; // this represent a battle against a monster with loot shared (based on success? // or same/similar like goldBattle)
+    // }
+
+    struct GoldBattle {
+        uint256 currentWinner;
+        uint16 combatStance;
     }
 
     struct Commitment {
@@ -93,7 +98,7 @@ contract Dungeon is Proxied {
     // STORAGE
     // ----------------------------------------------------------------------------------------------
 
-    mapping(uint256 => RoomStatus) public roomStatus;
+    mapping(uint256 => GoldBattle) public goldBattles;
     mapping(uint256 => Character) public characters;
     mapping(uint256 => address) public owners;
     mapping(uint256 => Commitment) public commitments;
@@ -173,7 +178,7 @@ contract Dungeon is Proxied {
                 currentRoom = newRoom;
                 if (action.pickTreasure) {
                     if (currentRoom.treasure) {
-                        character.gold = character.gold + 1 ether;
+                        _handleGoldBattle(characterID, character, combatStance);
                     }
                 }
             } else {
@@ -190,6 +195,60 @@ contract Dungeon is Proxied {
         _handleCommitment(characterID, epoch, commitment, actions, furtherActions);
         _handleEpochHash(epoch, secret);
         _handleCharacter(characterID, character);
+    }
+
+    function _handleGoldBattle(uint256 characterID, Character memory character, uint16 combatStance) internal {
+        GoldBattle memory battle = goldBattles[character.position];
+        if (battle.combatStance == 0) {
+            character.gold = character.gold + 1 ether;
+            battle.currentWinner = characterID;
+            battle.combatStance = combatStance;
+        } else {
+            // TODO make it commutative
+            // or track but limit the number of character that can get the gold
+            //  in that case, if that limit is reached, nobody is harmed, nobody get the gold
+            int8 result = _battle(combatStance, battle.combatStance);
+            if (result >= 0) {
+                if (battle.currentWinner != 0) {
+                    Character memory previous = characters[battle.currentWinner];
+                    previous.gold = previous.gold - 1 ether;
+                    _handleCharacter(battle.currentWinner, previous);
+                }
+                if (result > 0) {
+                    character.gold = character.gold + 1 ether;
+                    battle.currentWinner = characterID;
+                    battle.combatStance = combatStance;
+                } else {
+                    battle.currentWinner = 0;
+                    battle.combatStance = combatStance; // hmm prder would matter here depending on how they can be equal
+                }
+            }
+        }
+
+        goldBattles[character.position] = battle;
+    }
+
+    function _battle(uint16 p1_battleStance, uint16 p2_battleStance) internal pure returns (int8 total) {
+        uint8 p1_round = 10;
+        uint8 p2_round = 10;
+        for (uint256 i = 0; i < 3; i++) {
+            p1_round = _getNextValue(p1_battleStance, p1_round - 1);
+            p2_round = _getNextValue(p2_battleStance, p2_round - 1);
+            if (p1_round > p2_round) {
+                total = total + 1;
+            } else if (p1_round < p2_round) {
+                total = total - 1;
+            }
+        }
+    }
+
+    function _getNextValue(uint16 combatStance, uint8 start) internal pure returns (uint8) {
+        for (int256 i = (int8(start) - 1); i >= 0; i--) {
+            if ((combatStance >> uint256(i)) != 0) {
+                return uint8(uint256(i + 1));
+            }
+        }
+        return 0; // invalid
     }
 
     function _handleCommitment(

@@ -22,6 +22,7 @@ artifacts
 /deployments/31337
 /deployments/1337
 /deployments/void
+/typechain-types
 
 # forge: we do not use submodule instead we specify dependencies in package.json `prepare` script
 /lib

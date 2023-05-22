@@ -13,6 +13,6 @@
       "./scripts",
       "./deploy",
       "./js-test",
-      "typechain/**/*"
+      "typechain-types/**/*"
     ]
   }

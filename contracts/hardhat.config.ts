@@ -3,6 +3,7 @@ import {HardhatUserConfig} from 'hardhat/types';
 import 'hardhat-deploy';
 import '@nomiclabs/hardhat-ethers';
 import 'hardhat-deploy-ethers';
+import '@typechain/hardhat';
 import "hardhat-preprocessor";
 
 import {node_url, accounts, addForkConfiguration} from './hardhat/networks';
