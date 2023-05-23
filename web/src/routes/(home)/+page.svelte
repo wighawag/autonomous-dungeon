@@ -9,6 +9,26 @@
 	import Modal from '$lib/components/modals/Modal.svelte';
 	import WelcomeFlow from '$lib/components/dungeon/WelcomeFlow.svelte';
 	import {accountData} from '$lib/web3';
+	import {onMount} from 'svelte';
+
+	const clear_cache_id = 'sdjhsadjhsjdhsa';
+	let cacheNotif = false;
+	onMount(() => {
+		try {
+			const fromStorage = localStorage.getItem(clear_cache_id);
+			if (fromStorage === '1') {
+				cacheNotif = false;
+			} else {
+				cacheNotif = true;
+			}
+		} catch {}
+	});
+
+	function acknowledgeCache() {
+		cacheNotif = false;
+		localStorage.clear();
+		localStorage.setItem(clear_cache_id, '1');
+	}
 </script>
 
 <Canvas2D {gameState} />
@@ -17,7 +37,12 @@
 	<ConnectButton />
 </div>
 
-{#if $gameState.player}
+{#if cacheNotif}
+	<Modal>
+		<p>Sorry, this thing is still in development and we had to re deploy the contracts</p>
+		<button class="btn btn-error btn-large" on:click={() => acknowledgeCache()}>clear cache</button>
+	</Modal>
+{:else if $gameState.player}
 	{#if $gameState.playerCharacter}
 		<div class="fixed top-0 left-0 z-10">
 			<div class="card">
