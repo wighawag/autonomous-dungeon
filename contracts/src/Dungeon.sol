@@ -131,6 +131,10 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
         if (charactersCollection != characterTokens) {
             revert("characterTokens is immutable");
         }
+
+        (uint32 epoch, bool commiting) = _epoch();
+        // this is the first event, signaling to the indexer the first hash and epoch
+        _handleEpochHash(commiting ? epoch - 1 : epoch, bytes32(0));
     }
 
     // ----------------------------------------------------------------------------------------------
@@ -176,6 +180,10 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
 
         _checkHash(commitment.hash, secret, actions, combatStance, furtherActions);
 
+        // we emit that first to signal, any new state is now computed for the new epoch
+        // if we do after other events, then the event will not be first and its last occurence would not be able to indicate the end
+        _handleEpochHash(epoch, secret);
+
         Character memory character = characters[characterID];
         Room memory currentRoom = computeRoom(roomHash(epoch, character.position));
 
@@ -208,7 +216,7 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
         }
 
         _handleCommitment(characterID, epoch, commitment, actions, furtherActions);
-        _handleEpochHash(epoch, secret);
+
         _handleCharacter(characterID, character);
     }
 

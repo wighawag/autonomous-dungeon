@@ -18,6 +18,7 @@ export type GameState = {
 				committed?: OnChainAction<CommitMetadata>;
 				revealed?: OnChainAction<RevealMetadata>;
 				commited_from_past?: OnChainAction<CommitMetadata>;
+				needRecap: boolean;
 		  }
 		| undefined;
 	playerCharacter?: Character;
@@ -46,6 +47,7 @@ export const gameState: Readable<GameState> = derived(
 		let commitForBeforeRevealEpoch: OnChainAction<CommitMetadata> | undefined;
 		let revealForEpoch: OnChainAction<RevealMetadata> | undefined;
 
+		// this special cases should not be needed anymore as we emit hash Update in Dungeon constructor
 		const epoch = {...$pendingState.epoch};
 		if (epoch.number === 0) {
 			// special case
@@ -57,6 +59,8 @@ export const gameState: Readable<GameState> = derived(
 			epochBeforeReveal.number = get(phase).epoch;
 		}
 		// console.log({epochBeforeReveal, epoch});
+
+		const needRecap = get(phase).epoch > $offchainState.lastEpochAcknowledged;
 
 		// const $phase = get(phase);
 		// const epochFromClient = $phase?.epoch;
@@ -132,6 +136,7 @@ export const gameState: Readable<GameState> = derived(
 						committed: commitForEpoch,
 						revealed: revealForEpoch,
 						commited_from_past: commitForBeforeRevealEpoch,
+						needRecap,
 				  }
 				: undefined,
 			playerCharacter,
@@ -143,3 +148,7 @@ export const gameState: Readable<GameState> = derived(
 		return data;
 	}
 );
+
+if (typeof window !== 'undefined') {
+	(window as any).gameState = gameState;
+}

@@ -6,6 +6,7 @@ import type {PendingTransaction} from '$external/tx-observer';
 // import {bnReplacer, bnReviver, type CellAction, type CellPosition, type RoomAction} from 'jolly-roger-common';
 import {bnReplacer, bnReviver, type RoomAction, type RoomPosition} from 'jolly-roger-common';
 import {logs} from 'named-logs';
+import {accountData} from '.';
 
 const logger = logs('account-data');
 
@@ -55,12 +56,14 @@ export type OnChainActions = {[hash: `0x${string}`]: OnChainAction};
 
 export type OffchainState = {
 	epoch?: Epoch;
+	lastEpochAcknowledged: number;
 	// actions: CellAction[];
 	actions: RoomAction[];
 };
 
 const defaultOffchainState: OffchainState = {
 	actions: [],
+	lastEpochAcknowledged: 0,
 };
 
 export type AccountData = {
@@ -96,6 +99,7 @@ export function initAccountData() {
 		if (data.offchainState) {
 			$offchainState.actions = data.offchainState.actions;
 			$offchainState.epoch = data.offchainState.epoch;
+			$offchainState.lastEpochAcknowledged = data.offchainState.lastEpochAcknowledged;
 			offchainState.set($offchainState);
 		}
 
@@ -127,6 +131,7 @@ export function initAccountData() {
 		onchainActions.set($onchainActions);
 		$offchainState.actions = [];
 		$offchainState.epoch = undefined;
+		$offchainState.lastEpochAcknowledged = 0;
 		offchainState.set($offchainState);
 		emitter.emit({name: 'clear'});
 	}
@@ -282,6 +287,12 @@ export function initAccountData() {
 		offchainState.set($offchainState);
 	}
 
+	function acknowledgeEpoch(epochNumber: number) {
+		$offchainState.lastEpochAcknowledged = epochNumber;
+		save();
+		offchainState.set($offchainState);
+	}
+
 	return {
 		$onchainActions,
 		onchainActions: {
@@ -296,6 +307,7 @@ export function initAccountData() {
 			set,
 			pickTreasure,
 			reset: resetOffchainState,
+			acknowledgeEpoch,
 		},
 
 		load,

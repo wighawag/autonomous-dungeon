@@ -11,6 +11,7 @@ export type Character = {
 	equipment: `0x${string}`;
 	combatStanceAvailable: number;
 	revealed: boolean;
+	lastState: Omit<Character, 'player' | 'id' | 'position' | 'revealed' | 'lastState'> & {epoch: number};
 };
 
 export type Data = {
@@ -58,6 +59,13 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 				equipment: '0x0000000000000000000000000000000000000000000000000000000000000000',
 				combatStanceAvailable: 0,
 				revealed: false,
+				lastState: {
+					gold: 0n,
+					life: 0,
+					equipment: '0x0000000000000000000000000000000000000000000000000000000000000000',
+					combatStanceAvailable: 0,
+					epoch: 0,
+				},
 			});
 		} else {
 			state.characters[findIndex].revealed = false;
@@ -100,12 +108,22 @@ const TinyRogerIndexerProcessor: JSProcessor<MergedAbis<typeof contractsInfo.con
 			// the contract emit onCharacterEnterTheDungeon first
 			// and onCharacterEnterTheDungeon will add the character
 		} else {
-			state.characters[findIndex].position = position;
-			state.characters[findIndex].life = event.args.life;
-			state.characters[findIndex].gold = event.args.gold;
-			state.characters[findIndex].equipment = event.args.equipment;
-			state.characters[findIndex].combatStanceAvailable = event.args.combatStanceAvailable;
-			state.characters[findIndex].revealed = true;
+			const character = state.characters[findIndex];
+
+			if (character.lastState.epoch != state.epoch.number - 1) {
+				character.lastState.epoch = state.epoch.number - 1;
+				character.lastState.life = character.life;
+				character.lastState.gold = character.gold;
+				character.lastState.equipment = character.equipment;
+				character.lastState.combatStanceAvailable = character.combatStanceAvailable;
+			}
+
+			character.position = position;
+			character.life = event.args.life;
+			character.gold = event.args.gold;
+			character.equipment = event.args.equipment;
+			character.combatStanceAvailable = event.args.combatStanceAvailable;
+			character.revealed = true;
 		}
 	},
 

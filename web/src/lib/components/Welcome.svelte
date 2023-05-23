@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {status, syncing, state} from '$lib/blockchain/state/State';
 	import {contractsInfos} from '$lib/config';
-	import {connection, account, network} from '$lib/web3';
+	import {connection, account, network, accountData} from '$lib/web3';
 	import {onMount} from 'svelte';
 	import Modal from './modals/Modal.svelte';
 	import {gameState} from '$lib/game/GameState';
@@ -63,5 +63,17 @@
 {:else if !ready}
 	<Modal>
 		<h3 class="text-lg font-bold">Please wait While the Game Get Setup....</h3>
+	</Modal>
+{:else if $gameState.player?.needRecap}
+	<Modal>
+		<h3 class="text-lg font-bold">A New Day</h3>
+		<button
+			on:click={async () => {
+				if ($gameState.playerCharacter) {
+					accountData.offchainState.acknowledgeEpoch($gameState.epoch.number);
+				}
+			}}
+			class="btn">OK</button
+		>
 	</Modal>
 {/if}

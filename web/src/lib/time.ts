@@ -85,3 +85,8 @@ export function computePhase(timestamp: number, synced = true) {
 export const phase = derived(time, ($time) => {
 	return computePhase($time.timestamp, $time.synced);
 });
+
+if (typeof window !== 'undefined') {
+	(window as any).phase = phase;
+	(window as any).time = time;
+}

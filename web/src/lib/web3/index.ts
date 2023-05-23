@@ -123,4 +123,7 @@ if (typeof window !== 'undefined') {
 	(window as any).network = network;
 	(window as any).account = account;
 	(window as any).pendingActions = pendingActions;
+
+	(window as any).offchainState = accountData.offchainState;
+	(window as any).onchainActions = accountData.onchainActions;
 }
