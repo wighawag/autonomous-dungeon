@@ -1,8 +1,10 @@
-import 'dotenv/config';
+import { loadEnv } from 'ldenv';
+loadEnv({useModeEnv: 'DEPLOYMENT_CONTEXT'});
+
 import {HDAccountsUserConfig, HttpNetworkUserConfig, NetworksUserConfig} from 'hardhat/types';
 export function node_url(networkName: string): string {
 	if (networkName) {
-		const uri = process.env['ETH_NODE_URI_' + networkName.toUpperCase()];
+		const uri = process.env['RPC_URL_' + networkName.toUpperCase()];
 		if (uri && uri !== '') {
 			return uri;
 		}
@@ -13,7 +15,7 @@ export function node_url(networkName: string): string {
 		return 'http://localhost:8545';
 	}
 
-	let uri = process.env.ETH_NODE_URI;
+	let uri = process.env.RPC_URL;
 	if (uri) {
 		uri = uri.replace('{{networkName}}', networkName);
 	}

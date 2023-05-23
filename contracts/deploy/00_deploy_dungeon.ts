@@ -4,7 +4,7 @@ import {DeployFunction} from 'hardhat-deploy/types';
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	const {deployer} = await hre.getNamedAccounts();
 	const {deploy} = hre.deployments;
-	const useProxy = !hre.network.live;
+	const useProxy = true; // !hre.network.live;
 
 	const Characters = await deploy("Characters", {from: deployer});
 
@@ -12,6 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	// in live network, proxy is disabled and constructor is invoked
 	await deploy('Dungeon', {
 		from: deployer,
+		contract: 'TimeControlledDungeon',
 		proxy: useProxy && 'postUpgrade',
 		args: [Characters.address],
 		log: true,
