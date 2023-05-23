@@ -1019,9 +1019,9 @@
         "label": "uint8",
         "numberOfBytes": "1"
       }
-    },
-    "args_data": "0x",
+    }
+  },
+  "args_data": "0x",
     "tx_hash": "0x",
     "data": "0x"
-  }
 }
