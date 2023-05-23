@@ -272,6 +272,8 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
                     battle.currentWinner = 0;
                     battle.combatStance = combatStance; // hmm prder would matter here depending on how they can be equal
                 }
+            } else {
+                 character.life = character.life - 1
             }
         }
 
