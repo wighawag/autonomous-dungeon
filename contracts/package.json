@@ -50,6 +50,7 @@
     "watch_out_deploy": "pnpm compile; as-soon -w out pnpm run deploy",
     "watch_out_test": "pnpm compile; as-soon -w out pnpm run deploy",
     "deploy": "ldenv -m localhost forge script script/Deploy.s.sol --private-key @@DEPLOYER_PRIVATE_KEY --rpc-url @@RPC_URL_:DEPLOYMENT_CONTEXT,RPC_URL --broadcast ~~ forge-deploy sync ~~ @@",
+    "deploy-with-hardhat": "ldenv -m localhost hardhat --network @@DEPLOYMENT_CONTEXT deploy @@",
     "script": "ldenv forge script --private-key @@DEPLOYER_PRIVATE_KEY --rpc-url @@RPC_URL_:DEPLOYMENT_CONTEXT,RPC_URL --broadcast @@",
     "local_node": "rm -Rf deployments/localhost && anvil --host 0.0.0.0",
     "hardhat": "hardhat",
