@@ -37,7 +37,7 @@
 
 		<Choices />
 
-		{#if $gameState.player?.needRecap.diff}
+		{#if $gameState.player?.needRecap.newDay && $gameState.player?.needRecap.diff}
 			<Modal>
 				<h3 class="text-lg font-bold">Summary</h3>
 				{#if $gameState.player?.needRecap.diff.gold > 0}
