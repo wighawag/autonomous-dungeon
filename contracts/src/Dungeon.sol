@@ -132,6 +132,7 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
             revert("characterTokens is immutable");
         }
 
+        // TODO with forge-deploy-proxy this is not called
         (uint32 epoch, bool commiting) = _epoch();
         // this is the first event, signaling to the indexer the first hash and epoch
         _handleEpochHash(commiting ? epoch - 1 : epoch, bytes32(0));
@@ -185,6 +186,15 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
         _handleEpochHash(epoch, secret);
 
         Character memory character = characters[characterID];
+
+        require(
+            // TODO count the number of bit too
+            combatStance | character.combatStanceAvailable == character.combatStanceAvailable,
+            "INVALID_COMBAT_STANCE"
+        );
+
+        character.combatStanceAvailable = character.combatStanceAvailable ^ combatStance;
+
         Room memory currentRoom = computeRoom(roomHash(epoch, character.position));
 
         for (uint256 i = 0; i < actions.length; i++) {

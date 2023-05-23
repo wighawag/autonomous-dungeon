@@ -69,9 +69,7 @@
 		<h3 class="text-lg font-bold">A New Day</h3>
 		<button
 			on:click={async () => {
-				if ($gameState.playerCharacter) {
-					accountData.offchainState.acknowledgeEpoch($gameState.epoch.number);
-				}
+				accountData.offchainState.acknowledgeEpoch($gameState.epoch.number);
 			}}
 			class="btn">OK</button
 		>

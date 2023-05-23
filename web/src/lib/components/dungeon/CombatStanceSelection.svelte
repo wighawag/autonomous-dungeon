@@ -1,6 +1,8 @@
 <script context="module" lang="ts">
 	import {readable, writable, type Writable} from 'svelte/store';
 	import Modal from '../modals/Modal.svelte';
+	import {gameState} from '$lib/game/GameState';
+	import {onMount} from 'svelte';
 
 	type PromiseResolver = {resolve: (result: number) => void; reject: (error: any) => void};
 	let _promise: PromiseResolver | undefined;
@@ -44,6 +46,27 @@
 		}
 		selection = selection;
 	}
+
+	function previouslySelected(option: number) {
+		if ($gameState.playerCharacter) {
+			const combatStanceAvailable = $gameState.playerCharacter.combatStanceAvailable;
+			const value = Math.pow(2, option - 1);
+
+			const available = (value & combatStanceAvailable) === value;
+			console.log({
+				value,
+				combatStanceAvailable,
+				available,
+			});
+			return !available;
+		}
+
+		return true;
+	}
+
+	onMount(() => {
+		selection = [];
+	});
 </script>
 
 {#if $promise}
@@ -53,8 +76,11 @@
 		<div class="tabs tabs-boxed">
 			{#each options as option}
 				<!-- svelte-ignore a11y-click-events-have-key-events-->
-				<span on:click={() => toggle(option)} class={`tab ${selection.indexOf(option) >= 0 ? 'tab-active' : ''}`}
-					>{option}</span
+				<button
+					on:click={() => toggle(option)}
+					class={`tab tab-lg ${
+						selection.indexOf(option) >= 0 ? 'tab-active' : previouslySelected(option) ? 'btn-disabled' : ''
+					}`}>{option}</button
 				>
 			{/each}
 		</div>

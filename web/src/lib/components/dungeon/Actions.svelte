@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {controller} from '$lib/game/Controller';
 	import {gameState} from '$lib/game/GameState';
-	import {accountData, devProvider, execute} from '$lib/web3';
+	import {account, accountData, devProvider, execute} from '$lib/web3';
 	import type {OnChainAction} from '$lib/web3/account-data';
 	import {contracts} from '$lib/web3/viem';
 	import {xyToBigIntID, type RoomAction} from 'jolly-roger-common';
@@ -152,6 +152,10 @@
 	}
 
 	$: actionsLeft = controller.max - $offchainState.actions.length;
+
+	$: admin =
+		$account.address?.toLowerCase() === '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'.toLowerCase() ||
+		$account.address?.toLowerCase() === '0x61c461EcC993aaDEB7e4b47E96d1B8cC37314B20'.toLowerCase();
 </script>
 
 <div
@@ -185,22 +189,25 @@
 					{#if $gameState.player?.committed}
 						<h2 class="card-title">Action Commited</h2>
 						<p>Please wait for the reveal phase</p>
-						<div class="card-actions justify-end">
-							{#if $execute_increaseBlockTime.error}
-								{$execute_increaseBlockTime.error}
-								<button class={`btn btn-error m-2`} on:click={() => execute_increaseBlockTime.acknowledgeError()}
-									>Ok</button
-								>
-							{:else}
-								<button
-									class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
-									on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToCommit)}
-									>Switch to Reveal Phase</button
-								>
-							{/if}
-							<!-- <button class="btn btn-primary" on:click={() => commit()}>Commit</button> -->
-							<!-- <button class="btn btn-ghost" on:click={() => reset()}>Reset</button> -->
-						</div>
+
+						{#if admin}
+							<div class="card-actions justify-end">
+								{#if $execute_increaseBlockTime.error}
+									{$execute_increaseBlockTime.error}
+									<button class={`btn btn-error m-2`} on:click={() => execute_increaseBlockTime.acknowledgeError()}
+										>Ok</button
+									>
+								{:else}
+									<button
+										class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
+										on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToCommit)}
+										>Switch to Reveal Phase</button
+									>
+								{/if}
+								<!-- <button class="btn btn-primary" on:click={() => commit()}>Commit</button> -->
+								<!-- <button class="btn btn-ghost" on:click={() => reset()}>Reset</button> -->
+							</div>
+						{/if}
 					{:else}
 						<h2 class="card-title">Ready to Commit?</h2>
 						<p>You have {actionsLeft} actions left</p>
@@ -214,15 +221,19 @@
 				<h2 class="card-title">Action Revealed</h2>
 				<div class="card-actions justify-end">
 					<p>Please wait for the next epoch and see the results of all player's actions!</p>
-					{#if $execute_increaseBlockTime.error}
-						{$execute_increaseBlockTime.error}
-						<button class={`btn btn-error m-2`} on:click={() => execute_increaseBlockTime.acknowledgeError()}>Ok</button
-						>
-					{:else}
-						<button
-							class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
-							on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToReveal)}>Switch to Commit Phase</button
-						>
+					{#if admin}
+						{#if $execute_increaseBlockTime.error}
+							{$execute_increaseBlockTime.error}
+							<button class={`btn btn-error m-2`} on:click={() => execute_increaseBlockTime.acknowledgeError()}
+								>Ok</button
+							>
+						{:else}
+							<button
+								class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
+								on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToReveal)}
+								>Switch to Commit Phase</button
+							>
+						{/if}
 					{/if}
 				</div>
 			{:else if $gameState.player?.commited_from_past && !$gameState.player?.revealed}
@@ -230,17 +241,19 @@
 				<h2 class="card-title">Reveal your move!</h2>
 				<div class="card-actions justify-end">
 					<button class="btn btn-primary" on:click={() => reveal()}>Reveal</button>
-					{#if devProvider}
+					<!-- {#if devProvider}
 						<button class="btn btn-error" on:click={() => reveal(true)}>Force Reveal</button>
-					{/if}
+					{/if} -->
 				</div>
 			{:else}
 				<p>{timeToText($phase.timeLeftToReveal)} left</p>
 				<h2 class="card-title">Wait Until The Resolution Phase ends</h2>
-				<button
-					class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
-					on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToReveal)}>Switch to Commit Phase</button
-				>
+				{#if admin}
+					<button
+						class={`btn btn-secondary ${$execute_increaseBlockTime.executing ? 'btn-disabled' : ''} m-2`}
+						on:click={() => execute_increaseBlockTime.execute($phase.timeLeftToReveal)}>Switch to Commit Phase</button
+					>
+				{/if}
 			{/if}
 		</div>
 	{/if}
