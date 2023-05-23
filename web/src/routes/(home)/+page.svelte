@@ -31,13 +31,11 @@
 			<Modal>
 				<h3 class="text-lg font-bold">You Are Dead</h3>
 			</Modal>
-		{/if}
-
-		<Actions />
-
-		<Choices />
-
-		{#if $gameState.player?.needRecap.newDay && $gameState.player?.needRecap.diff}
+		{:else if $gameState.player.pendingActions.length > 0}
+			<Modal>
+				<h3 class="text-lg font-bold">Waiting for Tx...</h3>
+			</Modal>
+		{:else if $gameState.player?.needRecap.newDay && $gameState.player?.needRecap.diff}
 			<Modal>
 				<h3 class="text-lg font-bold">Summary</h3>
 				{#if $gameState.player?.needRecap.diff.gold > 0}
@@ -60,6 +58,10 @@
 				>
 			</Modal>
 		{/if}
+
+		<Actions />
+
+		<Choices />
 	{:else if $gameState.player.pendingActions.length > 0}
 		<Modal>
 			<h3 class="text-lg font-bold">Waiting for Tx...</h3>

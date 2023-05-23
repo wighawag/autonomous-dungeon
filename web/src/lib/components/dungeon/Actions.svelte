@@ -49,7 +49,7 @@
 			// TODO use deterministic secret using private wallet:
 			// const secret = keccak256(['bytes32', 'bytes32'], [privateWallet.hashString(), epochHash]);
 			const secret = params['demo']
-				? '0xebe98392422852aeb80cd4e114072c205ea0e603949d33eeadfba1ecb04e29f6'
+				? '0xe9a962e28eff5332c18f8514440376a5336d3005ae5d427ef8e8e619a1ce87f8' // '0xebe98392422852aeb80cd4e114072c205ea0e603949d33eeadfba1ecb04e29f6'
 				: // 0xb57c86b3791db14b2967759155c29086f149621fbb5180b192170e93331a560c
 				  ((`0x` +
 						[...crypto.getRandomValues(new Uint8Array(32))]
