@@ -294,7 +294,8 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
     function _handlePlayerBattle(uint256 epoch, uint256 characterID, Character memory character, uint16 combatStance)
         internal
     {
-        // TODO
+        // We want to enable player to player battle but to be less harsh we need first some temple room where PVP would be disabled
+        // Currently the only way to attack other player is when they attempt to get the same gold bags as yourself
     }
 
     function _battle(uint16 p1_battleStance, uint16 p2_battleStance) internal pure returns (int8 total) {
