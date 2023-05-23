@@ -4,8 +4,6 @@
 	import {connection, account, network, accountData} from '$lib/web3';
 	import {onMount} from 'svelte';
 	import Modal from './modals/Modal.svelte';
-	import {gameState} from '$lib/game/GameState';
-	import WelcomeFlow from './dungeon/WelcomeFlow.svelte';
 	import {getNetworkConfig} from '$lib/blockchain/networks';
 
 	$: progress = $status.state === 'Loaded' ? 100 : $syncing.lastSync?.syncPercentage || 0;
@@ -58,20 +56,8 @@
 			</div>
 		</Modal>
 	{/if}
-{:else if $gameState.player && !$gameState.playerCharacter}
-	<WelcomeFlow />
 {:else if !ready}
 	<Modal>
 		<h3 class="text-lg font-bold">Please wait While the Game Get Setup....</h3>
-	</Modal>
-{:else if $gameState.player?.needRecap}
-	<Modal>
-		<h3 class="text-lg font-bold">A New Day</h3>
-		<button
-			on:click={async () => {
-				accountData.offchainState.acknowledgeEpoch($gameState.epoch.number);
-			}}
-			class="btn">OK</button
-		>
 	</Modal>
 {/if}

@@ -14,6 +14,7 @@
 	import CombatStanceSelection, {chooseCombatStance} from './CombatStanceSelection.svelte';
 	import {increaseDungeonTime} from '$lib/utils/dungeon';
 	import {phase} from '$lib/time';
+	import {params} from '$lib/config';
 
 	const execute_increaseBlockTime = createExecutor(increaseDungeonTime); //createExecutor(increaseBlockTime);
 
@@ -47,10 +48,13 @@
 
 			// TODO use deterministic secret using private wallet:
 			// const secret = keccak256(['bytes32', 'bytes32'], [privateWallet.hashString(), epochHash]);
-			const secret = (`0x` +
-				[...crypto.getRandomValues(new Uint8Array(32))]
-					.map((m) => ('0' + m.toString(16)).slice(-2))
-					.join('')) as `0x${string}`;
+			const secret = params['demo']
+				? '0xebe98392422852aeb80cd4e114072c205ea0e603949d33eeadfba1ecb04e29f6'
+				: // 0xb57c86b3791db14b2967759155c29086f149621fbb5180b192170e93331a560c
+				  ((`0x` +
+						[...crypto.getRandomValues(new Uint8Array(32))]
+							.map((m) => ('0' + m.toString(16)).slice(-2))
+							.join('')) as `0x${string}`);
 			const commitmentHash = keccak256(
 				encodeAbiParameters(
 					[

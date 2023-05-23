@@ -150,6 +150,34 @@ export function value8Mod(data: string, leastSignificantBit: number, mod: number
 
 export function generateEpoch(epochHash: `0x${string}`) {
 	const raw_room_cache: {[coords: string]: RawRoom} = {};
+
+	function computeRoom(roomHashData: `0x${string}`, roomHashData2: `0x${string}`): RawRoom {
+		// take from the first 0 (right side) and take 2 bits to give you a number between [0,2**2[
+		const firstExit = value(roomHashData, 0, 2);
+
+		const hasSecondExit = value(roomHashData, 2, 5) < 10; // take 32 values [0,2**5[
+		const secondExitRaw = value(roomHashData, 7, 2); // this has one value too much. if
+		const secondExit = hasSecondExit && secondExitRaw < 3 ? secondExitRaw : 4;
+		// const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
+		// const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
+
+		const treasure = value(roomHashData2, 9, 10) < 20; // take 1024 values [0,2**10[
+		// TODO roomHashData3 ?
+		const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
+		const monster = treasure ? monsterRaw < 30 : monsterRaw < 1;
+
+		return {
+			exits: [
+				firstExit === 0 || secondExit === 0,
+				firstExit === 1 || secondExit === 1,
+				firstExit === 2 || secondExit === 2,
+				firstExit === 3 || secondExit === 3,
+			] as [boolean, boolean, boolean, boolean],
+			treasure,
+			monster,
+		};
+	}
+
 	function getRawRoom(x: number, y: number): RawRoom {
 		const key = `${x},${y}`;
 
@@ -158,29 +186,16 @@ export function generateEpoch(epochHash: `0x${string}`) {
 			const roomID = xyToBigIntID(x, y);
 			const roomHashData = keccak256(encodePacked(['bytes32', 'uint256'], [epochHash, roomID]));
 
-			// take from the first 0 (right side) and take 2 bits to give you a number between [0,2**2[
-			const firstExit = value(roomHashData, 0, 2);
-
-			const hasSecondExit = value(roomHashData, 2, 5) < 10; // take 32 values [0,2**5[
-			const secondExitRaw = value(roomHashData, 7, 2); // this has one value too much. if
-			const secondExit = hasSecondExit && secondExitRaw < 3 ? secondExitRaw : 4;
-			// const thirdExist = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
-			// const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
-
-			const treasure = value(roomHashData, 9, 10) < 20; // take 1024 values [0,2**10[
-			const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
-			const monster = treasure ? monsterRaw < 30 : monsterRaw < 1;
-
-			room = {
-				exits: [
-					firstExit === 0 || secondExit === 0,
-					firstExit === 1 || secondExit === 1,
-					firstExit === 2 || secondExit === 2,
-					firstExit === 3 || secondExit === 3,
-				] as [boolean, boolean, boolean, boolean],
-				treasure,
-				monster,
-			};
+			room = computeRoom(
+				roomHashData,
+				keccak256(
+					encodePacked(
+						['bytes32', 'uint256'],
+						// TODO layer 2 epoch Hash
+						['0x0000000000000000000000000000000000000000000000000000000000000000', roomID]
+					)
+				)
+			);
 			raw_room_cache[key] = room;
 		}
 

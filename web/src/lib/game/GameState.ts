@@ -18,7 +18,14 @@ export type GameState = {
 				committed?: OnChainAction<CommitMetadata>;
 				revealed?: OnChainAction<RevealMetadata>;
 				commited_from_past?: OnChainAction<CommitMetadata>;
-				needRecap: boolean;
+				needRecap: {
+					newDay: boolean;
+					diff?: Omit<
+						Character,
+						'player' | 'id' | 'position' | 'revealed' | 'equipment' | 'combatStanceAvailable' | 'lastState'
+					>;
+				};
+				pendingActions: OnChainAction[];
 		  }
 		| undefined;
 	playerCharacter?: Character;
@@ -60,8 +67,21 @@ export const gameState: Readable<GameState> = derived(
 		}
 		// console.log({epochBeforeReveal, epoch});
 
-		const needRecap = get(phase).epoch > $offchainState.lastEpochAcknowledged;
+		const newDay = get(phase).epoch > $offchainState.lastEpochAcknowledged;
+		const needRecap = {
+			newDay,
+			diff:
+				playerCharacter &&
+				(playerCharacter.gold != playerCharacter.lastState.gold ||
+					playerCharacter.life != playerCharacter.lastState.life)
+					? {
+							gold: playerCharacter.gold - playerCharacter.lastState.gold,
+							life: playerCharacter.life - playerCharacter.lastState.life,
+					  }
+					: undefined,
+		};
 
+		const pendingActions: OnChainAction[] = [];
 		// const $phase = get(phase);
 		// const epochFromClient = $phase?.epoch;
 		// console.log({epochFromClient});
@@ -70,6 +90,11 @@ export const gameState: Readable<GameState> = derived(
 			const action = entry[1];
 			if (!action.tx.metadata) {
 				continue;
+			}
+			if (action.inclusion !== 'Included') {
+				pendingActions.push(action);
+			} else if (action.tx.metadata.type === 'enter' && !playerCharacter) {
+				pendingActions.push(action);
 			}
 			if (action.tx.metadata.type === 'commit') {
 				// console.log({action_epoch: action.tx.metadata.epoch.number});
@@ -137,6 +162,7 @@ export const gameState: Readable<GameState> = derived(
 						revealed: revealForEpoch,
 						commited_from_past: commitForBeforeRevealEpoch,
 						needRecap,
+						pendingActions,
 				  }
 				: undefined,
 			playerCharacter,

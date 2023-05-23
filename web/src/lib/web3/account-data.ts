@@ -25,7 +25,11 @@ export type RevealMetadata = {
 	commitTx: `0x${string}`;
 };
 
-export type AnyMetadata = CommitMetadata | RevealMetadata;
+export type EnterMetadata = {
+	type: 'enter';
+};
+
+export type AnyMetadata = CommitMetadata | RevealMetadata | EnterMetadata;
 
 export type DungeonTransaction<T = AnyMetadata> = EIP1193TransactionWithMetadata & {
 	metadata?: {

@@ -37,6 +37,15 @@
 
 	let selection: number[] = [];
 
+	let last_promise: any | undefined;
+
+	$: {
+		if ((last_promise && !$promise) || (!last_promise && $promise)) {
+			last_promise = $promise;
+			selection = [];
+		}
+	}
+
 	function toggle(option: number) {
 		const index = selection.indexOf(option);
 		if (index >= 0) {
@@ -63,10 +72,6 @@
 
 		return true;
 	}
-
-	onMount(() => {
-		selection = [];
-	});
 </script>
 
 {#if $promise}

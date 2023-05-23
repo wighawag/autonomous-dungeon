@@ -343,6 +343,11 @@
           "internalType": "bytes32",
           "name": "roomHashData",
           "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "roomHashData2",
+          "type": "bytes32"
         }
       ],
       "name": "computeRoom",
@@ -579,6 +584,30 @@
           "internalType": "int32",
           "name": "y",
           "type": "int32"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "epochHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "name": "roomHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
         }
       ],
       "stateMutability": "pure",

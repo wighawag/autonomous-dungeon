@@ -116,6 +116,10 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
     bytes32 internal epochHash_0;
     bytes32 internal epochHash_1;
 
+    // TODO
+    // bytes32 internal layer2_epochHash_0;
+    // bytes32 internal layer2_epochHash_1;
+
     Characters immutable characterTokens;
 
     // ----------------------------------------------------------------------------------------------
@@ -195,11 +199,21 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
 
         character.combatStanceAvailable = character.combatStanceAvailable ^ combatStance;
 
-        Room memory currentRoom = computeRoom(roomHash(epoch, character.position));
+        Room memory currentRoom = computeRoom(
+            roomHash(epoch, character.position),
+            // TODO layer 2 epoch Hash
+            roomHash(bytes32(0x0000000000000000000000000000000000000000000000000000000000000000), character.position)
+        );
 
         for (uint256 i = 0; i < actions.length; i++) {
             Action memory action = actions[i];
-            Room memory newRoom = computeRoom(roomHash(epoch, action.position));
+            Room memory newRoom = computeRoom(
+                roomHash(epoch, action.position),
+                // TODO layer 2 epoch Hash
+                roomHash(
+                    bytes32(0x0000000000000000000000000000000000000000000000000000000000000000), character.position
+                )
+            );
 
             if (_isValidMove(character.position, currentRoom, action.position, newRoom)) {
                 character.position = action.position;
@@ -395,10 +409,14 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
 
     function roomHash(uint32 epoch, uint256 id) public view returns (bytes32) {
         bytes32 epochHash = epoch % 2 == 0 ? epochHash_0 : epochHash_1;
+        return roomHash(epochHash, id);
+    }
+
+    function roomHash(bytes32 epochHash, uint256 id) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(epochHash, id));
     }
 
-    function computeRoom(bytes32 roomHashData) public pure returns (Room memory) {
+    function computeRoom(bytes32 roomHashData, bytes32 roomHashData2) public pure returns (Room memory) {
         // // take from the first 0 (right side) and take 2 bits to give you a number between [0,2**2[
         // const firstExit = value(roomHashData, 0, 2);
         uint8 firstExit = uint8(Extraction.value(roomHashData, 0, 2));
@@ -413,9 +431,10 @@ contract Dungeon is Proxied, UsingInternalTimestamp {
         // // const fourthExit = firstExit + ((Math.floor(Math.random() * 3) + 1) % 4);
 
         // const treasure = value(roomHashData, 9, 10) < 7; // take 1024 values [0,2**10[
-        bool treasure = Extraction.value(roomHashData, 9, 10) < 20;
+        bool treasure = Extraction.value(roomHashData2, 9, 10) < 20;
 
         // const monsterRaw = value(roomHashData, 19, 7); // take 128 values [0,2**7[
+        // TODO roomHashData3 ?
         uint8 monsterRaw = uint8(Extraction.value(roomHashData, 19, 7));
         // const monster = treasure ? monsterRaw < 30 : monsterRaw < 1;
         bool monster = treasure ? monsterRaw < 30 : monsterRaw < 1;
